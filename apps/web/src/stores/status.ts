@@ -1,7 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3333'
+import { API_URL } from '@/services/api'
 
 export const useStatusStore = defineStore('status', () => {
   const apiOnline = ref<boolean | null>(null)
