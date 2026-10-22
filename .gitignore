@@ -1,6 +1,7 @@
 node_modules/
 dist/
 coverage/
+*.tsbuildinfo
 *.log
 
 # Cliente do Prisma (gerado por `prisma generate`)
