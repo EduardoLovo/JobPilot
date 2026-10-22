@@ -247,15 +247,20 @@ Uma **skill** é uma pasta com um arquivo `SKILL.md`: instruções em texto que 
 
 As skills do projeto ficam em [.claude/skills/](.claude/skills), e o Claude Code as lê dali quando você abre este projeto.
 
-| Skill                   | Quando usar                                                | O que faz                                                                                                                                         |
-| ----------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `preparacao-entrevista` | "Me prepara para a entrevista da vaga X", "o que estudar?" | Busca a candidatura, a vaga completa, as etapas anteriores e o currículo ativo, e monta um roteiro: vaga × currículo, perguntas, lacunas e estudo |
+| Skill                   | Quando usar                                                          | O que faz                                                                                                                                         |
+| ----------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `preparacao-entrevista` | "Me prepara para a entrevista da vaga X", "o que estudar?"           | Busca a candidatura, a vaga completa, as etapas anteriores e o currículo ativo, e monta um roteiro: vaga × currículo, perguntas, lacunas e estudo |
+| `ajuste-curriculo`      | "Ajusta meu currículo para a vaga X", "quais palavras-chave faltam?" | Compara o currículo ativo com a vaga e **sugere** reescritas (antes e depois), apontando as lacunas e perguntando se você tem a experiência       |
 
-Exige o servidor MCP conectado (veja acima). A skill só **lê** dados e não usa a `mover_candidatura`.
+Exige o servidor MCP conectado (veja acima). As skills só **leem** dados e não usam a `mover_candidatura`. A `ajuste-curriculo` também **não salva** o currículo: ela entrega o texto novo, e você cola na tela Currículo se quiser usá-lo.
+
+A regra mais importante da `ajuste-curriculo` é **nunca inventar**: ela só reescreve o que o currículo já mostra, e uma habilidade que a vaga pede e o currículo não tem vira uma pergunta ("você tem essa experiência?"), nunca uma linha nova no texto.
 
 **Como testar:** com o servidor registrado e uma candidatura em Entrevista (e um currículo ativo salvo), peça no Claude Code: _"Me prepara para a entrevista da candidatura da empresa X"_. O roteiro deve citar trechos da vaga e do seu currículo, usar as anotações das etapas anteriores e marcar como "exemplo" qualquer coisa que não esteja no seu currículo.
 
-Um teste automático (`apps/mcp/tests/skills.test.ts`) confere o formato de cada skill (nome igual ao da pasta, descrição com "Use quando") e que ela só cita ferramentas que o servidor MCP realmente oferece.
+Para a `ajuste-curriculo`, escolha uma vaga cujo anúncio peça algo que o seu currículo **não** tem e peça: _"Ajusta meu currículo para a vaga da empresa X"_. O resultado certo cita trechos reais do seu currículo, mostra o antes e o depois e trata o que falta como lacuna, perguntando se você tem a experiência.
+
+Um teste automático (`apps/mcp/tests/skills.test.ts`) confere o formato de cada skill (nome igual ao da pasta, descrição com "Use quando"), que ela só cita ferramentas que o servidor MCP realmente oferece e que toda skill que lê o currículo mantém a regra de nunca inventar experiência.
 
 > **Não foi testado aqui o Claude de fato usando a skill.** O formato e as ferramentas citadas são verificados por testes, e os dados que a skill pede foram buscados pelo servidor real, mas o roteiro em si depende do seu Claude Code com o servidor registrado.
 
