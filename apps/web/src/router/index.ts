@@ -14,6 +14,24 @@ declare module 'vue-router' {
 export const routes: RouteRecordRaw[] = [
   { path: '/', name: 'home', component: HomeView, meta: { requiresAuth: true } },
   {
+    path: '/vagas',
+    name: 'vagas',
+    component: () => import('@/views/VagasView.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/vagas/nova',
+    name: 'vaga-nova',
+    component: () => import('@/views/VagaFormView.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/vagas/:id/editar',
+    name: 'vaga-editar',
+    component: () => import('@/views/VagaFormView.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
     path: '/login',
     name: 'login',
     component: () => import('@/views/LoginView.vue'),
