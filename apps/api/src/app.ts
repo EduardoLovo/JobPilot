@@ -4,9 +4,17 @@ import { errorHandler } from './middlewares/error-handler.js'
 import { createAuthRouter } from './modules/auth/auth.routes.js'
 import { createAuthService } from './modules/auth/auth.service.js'
 import type { UsuarioRepository } from './modules/auth/usuario.repository.js'
+import type { EmpresaRepository } from './modules/empresas/empresa.repository.js'
+import { createEmpresaRouter } from './modules/empresas/empresa.routes.js'
+import { createEmpresaService } from './modules/empresas/empresa.service.js'
+import type { VagaRepository } from './modules/vagas/vaga.repository.js'
+import { createVagaRouter } from './modules/vagas/vaga.routes.js'
+import { createVagaService } from './modules/vagas/vaga.service.js'
 
 export interface AppDeps {
   usuarios: UsuarioRepository
+  empresas: EmpresaRepository
+  vagas: VagaRepository
 }
 
 // O app é separado do server.ts para que os testes usem o Express sem abrir porta
@@ -22,6 +30,8 @@ export function createApp(deps: AppDeps) {
   })
 
   app.use('/auth', createAuthRouter(createAuthService(deps.usuarios)))
+  app.use('/empresas', createEmpresaRouter(createEmpresaService(deps.empresas)))
+  app.use('/vagas', createVagaRouter(createVagaService(deps.vagas, deps.empresas)))
 
   app.use(errorHandler)
 

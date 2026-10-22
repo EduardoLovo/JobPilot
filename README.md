@@ -67,6 +67,27 @@ O access token vale 15 minutos e vai no header `Authorization: Bearer <token>`. 
 | POST   | `/auth/refresh`  | `{ refreshToken }`       | `200` novo `accessToken` e `refreshToken` |
 | GET    | `/auth/me`       | —                        | `200` usuário logado                      |
 
+### Empresas e vagas
+
+Todas as rotas exigem o access token.
+
+| Método | Rota            | Observação                                                                    |
+| ------ | --------------- | ----------------------------------------------------------------------------- |
+| GET    | `/empresas`     | Ordem alfabética; filtro `?busca=`                                            |
+| POST   | `/empresas`     | `{ nome, site? }`                                                             |
+| GET    | `/empresas/:id` |                                                                               |
+| PUT    | `/empresas/:id` | `{ nome, site? }`                                                             |
+| DELETE | `/empresas/:id` | `409` se a empresa ainda tem vagas                                            |
+| GET    | `/vagas`        | Mais recentes primeiro; filtros `?empresaId=&modalidade=&senioridade=&busca=` |
+| POST   | `/vagas`        | `{ empresaId, titulo, descricao, url?, modalidade?, senioridade? }`           |
+| GET    | `/vagas/:id`    |                                                                               |
+| PUT    | `/vagas/:id`    | Mesmo corpo do POST                                                           |
+| DELETE | `/vagas/:id`    | Remove também as candidaturas da vaga                                         |
+
+As vagas sempre voltam com `empresa: { id, nome }`. Valores aceitos: `modalidade` = `REMOTO`, `HIBRIDO`, `PRESENCIAL`; `senioridade` = `ESTAGIO`, `JUNIOR`, `PLENO`, `SENIOR`, `ESPECIALISTA`.
+
+### Erros
+
 Erros vêm como `{ "erro": "mensagem" }`. Erros de validação (`400`) trazem também `detalhes` com o campo e a mensagem.
 
 ## Usando o servidor MCP no Claude
