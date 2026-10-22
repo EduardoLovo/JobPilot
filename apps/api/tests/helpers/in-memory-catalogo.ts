@@ -1,5 +1,9 @@
 import { randomUUID } from 'node:crypto'
 import type {
+  CandidaturaRecord,
+  CandidaturaRepository,
+} from '../../src/modules/candidaturas/candidatura.repository.js'
+import type {
   EmpresaRecord,
   EmpresaRepository,
 } from '../../src/modules/empresas/empresa.repository.js'
@@ -80,5 +84,59 @@ export function createInMemoryCatalogo() {
     },
   }
 
-  return { empresas, vagas }
+  const candidaturasDb: Omit<CandidaturaRecord, 'vaga'>[] = []
+
+  const withVaga = (candidatura: Omit<CandidaturaRecord, 'vaga'>): CandidaturaRecord => {
+    const vaga = vagasDb.find((v) => v.id === candidatura.vagaId)!
+    const { id, nome } = empresasDb.find((e) => e.id === vaga.empresaId)!
+    return { ...candidatura, vaga: { id: vaga.id, titulo: vaga.titulo, empresa: { id, nome } } }
+  }
+
+  const candidaturas: CandidaturaRepository = {
+    list: async (usuarioId, f) =>
+      candidaturasDb
+        .filter(
+          (c) =>
+            c.usuarioId === usuarioId &&
+            (!f.status || c.status === f.status) &&
+            (!f.vagaId || c.vagaId === f.vagaId),
+        )
+        .map(withVaga),
+    findById: async (id, usuarioId) => {
+      const c = candidaturasDb.find((c) => c.id === id && c.usuarioId === usuarioId)
+      return c ? withVaga(c) : null
+    },
+    findByUsuarioVaga: async (usuarioId, vagaId) => {
+      const c = candidaturasDb.find((c) => c.usuarioId === usuarioId && c.vagaId === vagaId)
+      return c ? withVaga(c) : null
+    },
+    create: async (data) => {
+      // Imita o índice único do banco (usuarioId + vagaId), que o Prisma reporta como P2002
+      if (candidaturasDb.some((c) => c.usuarioId === data.usuarioId && c.vagaId === data.vagaId)) {
+        throw Object.assign(new Error('Unique constraint failed'), { code: 'P2002' })
+      }
+      const candidatura = {
+        id: randomUUID(),
+        status: 'INTERESSE' as const,
+        dataAplicacao: null,
+        atualizadoEm: new Date(),
+        ...data,
+      }
+      candidaturasDb.push(candidatura)
+      return withVaga(candidatura)
+    },
+    update: async (id, data) => {
+      const candidatura = candidaturasDb.find((c) => c.id === id)!
+      Object.assign(candidatura, data, { atualizadoEm: new Date() })
+      return withVaga(candidatura)
+    },
+    delete: async (id) => {
+      candidaturasDb.splice(
+        candidaturasDb.findIndex((c) => c.id === id),
+        1,
+      )
+    },
+  }
+
+  return { empresas, vagas, candidaturas }
 }

@@ -9,10 +9,10 @@ export function createTestApp() {
   return { app, usuarios }
 }
 
+const ana = { nome: 'Ana Souza', email: 'ana@exemplo.com', senha: 'senha-forte-123' }
+
 // Cadastra uma usuária e devolve o header de autorização pronto para usar
-export async function authHeader(app: ReturnType<typeof createApp>) {
-  const res = await request(app)
-    .post('/auth/register')
-    .send({ nome: 'Ana Souza', email: 'ana@exemplo.com', senha: 'senha-forte-123' })
+export async function authHeader(app: ReturnType<typeof createApp>, dados = ana) {
+  const res = await request(app).post('/auth/register').send(dados)
   return { Authorization: `Bearer ${res.body.accessToken}` }
 }

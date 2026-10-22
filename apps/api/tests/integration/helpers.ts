@@ -2,6 +2,7 @@ import request from 'supertest'
 import { createApp } from '../../src/app.js'
 import { prisma } from '../../src/lib/prisma.js'
 import { createPrismaUsuarioRepository } from '../../src/modules/auth/usuario.repository.js'
+import { createPrismaCandidaturaRepository } from '../../src/modules/candidaturas/candidatura.repository.js'
 import { createPrismaEmpresaRepository } from '../../src/modules/empresas/empresa.repository.js'
 import { createPrismaVagaRepository } from '../../src/modules/vagas/vaga.repository.js'
 import { assertTestDatabase } from './test-database.js'
@@ -14,6 +15,7 @@ export function createIntegrationApp() {
     usuarios: createPrismaUsuarioRepository(prisma),
     empresas: createPrismaEmpresaRepository(prisma),
     vagas: createPrismaVagaRepository(prisma),
+    candidaturas: createPrismaCandidaturaRepository(prisma),
   })
 }
 
@@ -27,6 +29,7 @@ export async function resetDatabase() {
 }
 
 export const ana = { nome: 'Ana Souza', email: 'ana@exemplo.com', senha: 'senha-forte-123' }
+export const bia = { nome: 'Bia Lima', email: 'bia@exemplo.com', senha: 'senha-forte-456' }
 
 export async function cadastrar(app: ReturnType<typeof createApp>, dados = ana) {
   const res = await request(app).post('/auth/register').send(dados)
