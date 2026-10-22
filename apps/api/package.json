@@ -12,6 +12,7 @@
     "start": "node dist/server.js",
     "test": "vitest run",
     "test:watch": "vitest",
+    "pretest:integration": "prisma generate",
     "test:integration": "vitest run --config vitest.integration.config.ts",
     "typecheck": "prisma generate && tsc --noEmit"
   },
