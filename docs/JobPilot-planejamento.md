@@ -252,9 +252,9 @@ gantt
     section Sprint 2
     Candidaturas + Kanban drag-and-drop :s2, after s1, 14d
     section Sprint 3
-    n8n + Agente Analista de Vaga :s3, after s2, 14d
+    Servidor MCP + Skills :s3, after s2, 14d
     section Sprint 4
-    Servidor MCP + Skills + follow-up :s4, after s3, 14d
+    n8n + Agente Analista de Vaga + resumo semanal :s4, after s3, 14d
     section Sprint 5
     Dashboard, testes E2E, deploy, polimento :s5, after s4, 14d
 ```
@@ -328,5 +328,5 @@ flowchart BT
 🟥 **Post-its vermelhos**
 - Custo de chamadas de IA → limitar análises por dia, cache por vaga
 - IA devolve JSON inválido → schema Zod + retry
-- Escopo grande para uma pessoa → MVP até a Sprint 3, MCP e skills como bônus
+- Escopo grande para uma pessoa → MVP sem IA até a Sprint 2; MCP e skills na Sprint 3 e a IA com n8n na Sprint 4 (ordem trocada na retrospectiva da Sprint 2)
 - Dados pessoais do currículo → não logar conteúdo, `.env` fora do Git
