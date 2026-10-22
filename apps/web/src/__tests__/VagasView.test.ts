@@ -3,6 +3,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import VagasView from '@/views/VagasView.vue'
 import { stubApi, vagaDe } from './api-mock'
+import { candidaturaDe } from './candidatura-mock'
 import { createTestRouter, jsonResponse, logarComTokens } from './helpers'
 
 async function montar() {
@@ -12,6 +13,14 @@ async function montar() {
   await flushPromises()
   return wrapper
 }
+
+// Responde a lista de vagas e a de candidaturas (que a tela busca junto)
+const respostas =
+  (candidaturas: object[] = []) =>
+  (req: { method: string; path: string }) => {
+    if (req.path.startsWith('/candidaturas')) return jsonResponse(200, candidaturas)
+    if (req.path.startsWith('/vagas')) return jsonResponse(200, [vagaDe()])
+  }
 
 describe('VagasView', () => {
   beforeEach(() => {
@@ -26,7 +35,7 @@ describe('VagasView', () => {
   })
 
   it('lista as vagas com empresa, modalidade e senioridade', async () => {
-    stubApi(() => jsonResponse(200, [vagaDe()]))
+    stubApi(respostas())
 
     const wrapper = await montar()
 
@@ -38,7 +47,7 @@ describe('VagasView', () => {
   })
 
   it('mostra o aviso quando não há vagas', async () => {
-    stubApi(() => jsonResponse(200, []))
+    stubApi(({ path }) => jsonResponse(200, path.startsWith('/vagas') ? [] : []))
 
     const wrapper = await montar()
 
@@ -54,19 +63,22 @@ describe('VagasView', () => {
   })
 
   it('refaz a busca ao escolher um filtro, enviando só os filtros preenchidos', async () => {
-    const { calls } = stubApi(() => jsonResponse(200, []))
+    const { calls } = stubApi(({ path }) => jsonResponse(200, path.startsWith('/vagas') ? [] : []))
     const wrapper = await montar()
 
     await wrapper.get('select[aria-label="Modalidade"]').setValue('HIBRIDO')
     await flushPromises()
 
-    expect(calls().map((c) => c.path)).toEqual(['/vagas', '/vagas?modalidade=HIBRIDO'])
+    const buscasDeVagas = calls()
+      .map((c) => c.path)
+      .filter((path) => path.startsWith('/vagas'))
+    expect(buscasDeVagas).toEqual(['/vagas', '/vagas?modalidade=HIBRIDO'])
   })
 
   it('remove a vaga depois de confirmar', async () => {
     vi.spyOn(window, 'confirm').mockReturnValue(true)
-    const { calls } = stubApi(({ method }) =>
-      method === 'DELETE' ? jsonResponse(204) : jsonResponse(200, [vagaDe()]),
+    const { calls } = stubApi((req) =>
+      req.method === 'DELETE' ? jsonResponse(204) : respostas()(req),
     )
     const wrapper = await montar()
 
@@ -79,7 +91,7 @@ describe('VagasView', () => {
 
   it('não remove quando a pessoa cancela a confirmação', async () => {
     vi.spyOn(window, 'confirm').mockReturnValue(false)
-    const { calls } = stubApi(() => jsonResponse(200, [vagaDe()]))
+    const { calls } = stubApi(respostas())
     const wrapper = await montar()
 
     await wrapper.get('.btn-perigo').trigger('click')
@@ -87,5 +99,67 @@ describe('VagasView', () => {
 
     expect(calls().some((c) => c.method === 'DELETE')).toBe(false)
     expect(wrapper.find('[data-test="vaga"]').exists()).toBe(true)
+  })
+
+  describe('candidatar-se', () => {
+    it('cria a candidatura e troca o botão pelo status', async () => {
+      const { calls } = stubApi((req) =>
+        req.method === 'POST' ? jsonResponse(201, candidaturaDe()) : respostas()(req),
+      )
+      const wrapper = await montar()
+
+      await wrapper.get('[data-test="candidatar"]').trigger('click')
+      await flushPromises()
+
+      expect(calls().at(-1)).toMatchObject({
+        method: 'POST',
+        path: '/candidaturas',
+        body: { vagaId: 'v1' },
+      })
+      expect(wrapper.find('[data-test="candidatar"]').exists()).toBe(false)
+      expect(wrapper.get('[data-test="candidatura"]').text()).toBe('Candidatura: Interesse')
+    })
+
+    it('mostra o status em vez do botão para quem já se candidatou', async () => {
+      stubApi(respostas([candidaturaDe({ status: 'APLICADO' })]))
+
+      const wrapper = await montar()
+
+      expect(wrapper.find('[data-test="candidatar"]').exists()).toBe(false)
+      expect(wrapper.get('[data-test="candidatura"]').text()).toBe('Candidatura: Aplicado')
+    })
+
+    it('se a candidatura já existia (409), atualiza a tela sem mostrar erro', async () => {
+      let existe = false
+      stubApi((req) => {
+        if (req.method === 'POST') {
+          existe = true
+          return jsonResponse(409, { erro: 'Você já tem uma candidatura para esta vaga' })
+        }
+        return respostas(existe ? [candidaturaDe({ status: 'ENTREVISTA' })] : [])(req)
+      })
+      const wrapper = await montar()
+
+      await wrapper.get('[data-test="candidatar"]').trigger('click')
+      await flushPromises()
+
+      expect(wrapper.find('[data-test="erro"]').exists()).toBe(false)
+      expect(wrapper.get('[data-test="candidatura"]').text()).toBe('Candidatura: Entrevista')
+    })
+
+    it('mostra o erro quando a candidatura falha por outro motivo', async () => {
+      stubApi((req) =>
+        req.method === 'POST'
+          ? jsonResponse(400, { erro: 'Vaga informada não existe' })
+          : respostas()(req),
+      )
+      const wrapper = await montar()
+
+      await wrapper.get('[data-test="candidatar"]').trigger('click')
+      await flushPromises()
+
+      expect(wrapper.get('[data-test="erro"]').text()).toBe('Vaga informada não existe')
+      expect(wrapper.find('[data-test="candidatar"]').exists()).toBe(true)
+    })
   })
 })

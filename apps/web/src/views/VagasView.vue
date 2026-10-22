@@ -2,6 +2,7 @@
 import { onMounted, reactive, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import { ApiError } from '@/services/api'
+import { candidaturasService, ROTULOS, type Candidatura } from '@/services/candidaturas'
 import {
   MODALIDADES,
   SENIORIDADES,
@@ -36,6 +37,37 @@ async function carregar() {
   }
 }
 
+// Candidaturas da pessoa por vaga: quem já se candidatou vê o status no lugar do botão
+const candidaturaPorVaga = ref<Record<string, Candidatura>>({})
+const candidatando = ref<string | null>(null)
+
+async function carregarCandidaturas() {
+  try {
+    const lista = await candidaturasService.list()
+    candidaturaPorVaga.value = Object.fromEntries(lista.map((c) => [c.vagaId, c]))
+  } catch (e) {
+    erro.value = e instanceof ApiError ? e.message : 'Não foi possível conectar à API.'
+  }
+}
+
+async function candidatar(vaga: Vaga) {
+  erro.value = ''
+  candidatando.value = vaga.id
+  try {
+    const candidatura = await candidaturasService.create({ vagaId: vaga.id })
+    candidaturaPorVaga.value = { ...candidaturaPorVaga.value, [vaga.id]: candidatura }
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 409) {
+      // Já existia (outra aba, clique duplo): só atualiza o que a tela mostra
+      await carregarCandidaturas()
+    } else {
+      erro.value = e instanceof ApiError ? e.message : 'Não foi possível candidatar-se.'
+    }
+  } finally {
+    candidatando.value = null
+  }
+}
+
 // Espera a pessoa parar de digitar antes de buscar
 let timer: ReturnType<typeof setTimeout>
 watch(
@@ -58,7 +90,7 @@ async function remover(vaga: Vaga) {
   }
 }
 
-onMounted(carregar)
+onMounted(() => Promise.all([carregar(), carregarCandidaturas()]))
 </script>
 
 <template>
@@ -104,6 +136,24 @@ onMounted(carregar)
         </p>
       </div>
       <div class="acoes">
+        <RouterLink
+          v-if="candidaturaPorVaga[vaga.id]"
+          class="tag tag-status"
+          :to="{ name: 'home' }"
+          data-test="candidatura"
+        >
+          Candidatura: {{ ROTULOS[candidaturaPorVaga[vaga.id].status] }}
+        </RouterLink>
+        <button
+          v-else
+          class="btn btn-auto btn-pequeno"
+          type="button"
+          :disabled="candidatando === vaga.id"
+          data-test="candidatar"
+          @click="candidatar(vaga)"
+        >
+          {{ candidatando === vaga.id ? 'Candidatando...' : 'Candidatar-se' }}
+        </button>
         <a v-if="vaga.url" :href="vaga.url" target="_blank" rel="noopener noreferrer"
           >Ver anúncio</a
         >

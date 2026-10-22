@@ -15,6 +15,7 @@ function sair() {
   <header class="topbar">
     <RouterLink to="/" class="marca">JobPilot</RouterLink>
     <nav v-if="auth.isAuthenticated" class="menu">
+      <RouterLink :to="{ name: 'home' }">Candidaturas</RouterLink>
       <RouterLink :to="{ name: 'vagas' }">Vagas</RouterLink>
     </nav>
     <div v-if="auth.isAuthenticated" class="usuario">
@@ -252,6 +253,17 @@ main {
   align-items: flex-end;
   gap: 6px;
   font-size: 14px;
+}
+
+.btn-pequeno {
+  padding: 6px 12px;
+  font-size: 14px;
+}
+
+.tag-status {
+  color: inherit;
+  text-decoration: none;
+  background: #dafbe1;
 }
 
 .btn-perigo {
