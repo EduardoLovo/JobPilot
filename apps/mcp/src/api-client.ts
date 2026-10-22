@@ -18,7 +18,10 @@ interface Opcoes {
 
 export interface ApiClient {
   get<T>(caminho: string, opcoes?: Opcoes): Promise<T>
+  patch<T>(caminho: string, corpo: unknown): Promise<T>
 }
+
+type Metodo = 'GET' | 'PATCH'
 
 // Faz o login com o e-mail e a senha configurados, guarda o token e o renova sozinho: o token de
 // acesso vale 15 minutos, e um servidor MCP pode ficar aberto o dia todo.
@@ -26,14 +29,26 @@ export function createApiClient(config: McpConfig, fetchImpl: typeof fetch = fet
   let token: string | null = null
   let loginEmAndamento: Promise<string> | null = null
 
-  async function enviar(caminho: string, headers: Record<string, string> = {}) {
+  const apiForaDoAr = () =>
+    new JobPilotApiError(
+      0,
+      `Não consegui falar com a API do JobPilot em ${config.apiUrl}. Ela está rodando?`,
+    )
+
+  async function enviar(
+    metodo: Metodo,
+    caminho: string,
+    corpo?: unknown,
+    headers: Record<string, string> = {},
+  ) {
     try {
-      return await fetchImpl(`${config.apiUrl}${caminho}`, { headers })
+      return await fetchImpl(`${config.apiUrl}${caminho}`, {
+        method: metodo,
+        headers: { ...(corpo !== undefined && { 'Content-Type': 'application/json' }), ...headers },
+        body: corpo !== undefined ? JSON.stringify(corpo) : undefined,
+      })
     } catch {
-      throw new JobPilotApiError(
-        0,
-        `Não consegui falar com a API do JobPilot em ${config.apiUrl}. Ela está rodando?`,
-      )
+      throw apiForaDoAr()
     }
   }
 
@@ -43,10 +58,7 @@ export function createApiClient(config: McpConfig, fetchImpl: typeof fetch = fet
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: config.email, senha: config.senha }),
     }).catch(() => {
-      throw new JobPilotApiError(
-        0,
-        `Não consegui falar com a API do JobPilot em ${config.apiUrl}. Ela está rodando?`,
-      )
+      throw apiForaDoAr()
     })
 
     if (res.status === 401) {
@@ -80,20 +92,25 @@ export function createApiClient(config: McpConfig, fetchImpl: typeof fetch = fet
     return corpo as T
   }
 
+  async function autenticada<T>(metodo: Metodo, caminho: string, corpo?: unknown) {
+    const tentar = async () =>
+      enviar(metodo, caminho, corpo, {
+        Authorization: `Bearer ${token ?? (await garantirLogin())}`,
+      })
+
+    let res = await tentar()
+    // Token vencido: entra de novo uma vez e repete. É seguro repetir até uma escrita, porque
+    // um 401 significa que a API nem chegou a processar o pedido.
+    if (res.status === 401) {
+      token = null
+      res = await tentar()
+    }
+    return lerCorpo<T>(res)
+  }
+
   return {
-    async get<T>(caminho: string, { auth = true }: Opcoes = {}) {
-      if (!auth) return lerCorpo<T>(await enviar(caminho))
-
-      const autorizado = async () =>
-        enviar(caminho, { Authorization: `Bearer ${token ?? (await garantirLogin())}` })
-
-      let res = await autorizado()
-      // Token vencido: entra de novo uma vez e repete
-      if (res.status === 401) {
-        token = null
-        res = await autorizado()
-      }
-      return lerCorpo<T>(res)
-    },
+    get: async <T>(caminho: string, { auth = true }: Opcoes = {}) =>
+      auth ? autenticada<T>('GET', caminho) : lerCorpo<T>(await enviar('GET', caminho)),
+    patch: <T>(caminho: string, corpo: unknown) => autenticada<T>('PATCH', caminho, corpo),
   }
 }

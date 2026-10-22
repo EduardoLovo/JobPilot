@@ -165,15 +165,18 @@ Claude  ⇄  servidor MCP (apps/mcp)  ⇄  API (apps/api)  ⇄  PostgreSQL
 
 ### Ferramentas
 
-Todas são só de leitura.
+Três são só de leitura. A `mover_candidatura` **altera dados**: muda o status de uma candidatura, e por isso a descrição dela orienta o Claude a confirmar com você antes de usá-la.
 
 | Ferramenta             | O que faz                                                                                                                  |
 | ---------------------- | -------------------------------------------------------------------------------------------------------------------------- |
 | `listar_candidaturas`  | Lista as suas candidaturas, com os filtros `status` e `parada_ha_dias`; mostra os dias parada e para onde cada uma pode ir |
 | `detalhar_candidatura` | Mostra uma candidatura com a vaga completa (descrição) e a linha do tempo de etapas                                        |
+| `mover_candidatura`    | Muda o status de uma candidatura (`id` e `status`), com as mesmas regras do kanban; **altera dados**                       |
 | `status_api`           | Verifica se a API está no ar (não precisa de login)                                                                        |
 
 "Parada" quer dizer sem mudança de status nem de datas: registrar uma etapa não zera a contagem.
+
+Como a `mover_candidatura` funciona: ela lê a candidatura e confere se o destino está na lista de `pode_mover_para` que a própria API informa; se não estiver, responde com os destinos válidos e **não escreve nada**. Pedir o status que a candidatura já tem não muda nada. Se outra mudança acontecer ao mesmo tempo, a API recusa (409) e a ferramenta mostra o motivo.
 
 ### Configurar
 
