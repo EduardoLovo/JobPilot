@@ -4,6 +4,7 @@ import { createPrismaUsuarioRepository } from './modules/auth/usuario.repository
 import { createPrismaCandidaturaRepository } from './modules/candidaturas/candidatura.repository.js'
 import { createPrismaCurriculoRepository } from './modules/curriculos/curriculo.repository.js'
 import { createPrismaEmpresaRepository } from './modules/empresas/empresa.repository.js'
+import { createPrismaEtapaRepository } from './modules/etapas/etapa.repository.js'
 import { createPrismaVagaRepository } from './modules/vagas/vaga.repository.js'
 
 const port = Number(process.env.API_PORT ?? 3333)
@@ -14,6 +15,7 @@ const app = createApp({
   vagas: createPrismaVagaRepository(prisma),
   candidaturas: createPrismaCandidaturaRepository(prisma),
   curriculos: createPrismaCurriculoRepository(prisma),
+  etapas: createPrismaEtapaRepository(prisma),
 })
 
 app.listen(port, () => {

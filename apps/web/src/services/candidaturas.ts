@@ -27,6 +27,10 @@ export interface Candidatura {
 
 export const candidaturasService = {
   list: () => api<Candidatura[]>('/candidaturas'),
+  get: (id: string) => api<Candidatura>(`/candidaturas/${id}`),
+  // Só o que for enviado muda; null limpa a data
+  update: (id: string, data: { dataAplicacao?: string | null; proximoFollowup?: string | null }) =>
+    api<Candidatura>(`/candidaturas/${id}`, { method: 'PATCH', body: data }),
   create: (data: { vagaId: string; proximoFollowup?: string | null }) =>
     api<Candidatura>('/candidaturas', { method: 'POST', body: data }),
   changeStatus: (id: string, status: StatusCandidatura) =>

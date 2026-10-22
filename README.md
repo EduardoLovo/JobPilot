@@ -120,6 +120,19 @@ Cada pessoa vê e altera só as próprias candidaturas; a de outra pessoa respon
 
 Avança uma etapa por vez, pode voltar uma etapa (card arrastado sem querer) e reabrir uma candidatura encerrada. Não dá para pular direto de `INTERESSE` para `ENTREVISTA` ou `OFERTA`. As regras ficam em [status.ts](apps/api/src/modules/candidaturas/status.ts).
 
+### Etapas da candidatura
+
+As etapas (triagem, entrevistas, teste técnico, proposta) formam a linha do tempo de uma candidatura. Ficam aninhadas nela, e quem manda é o dono da candidatura: a de outra pessoa responde `404` em todas as rotas.
+
+| Método | Rota                                | Observação                                                    |
+| ------ | ----------------------------------- | ------------------------------------------------------------- |
+| GET    | `/candidaturas/:id/etapas`          | Em ordem cronológica                                          |
+| POST   | `/candidaturas/:id/etapas`          | `{ tipo, data, anotacoes? }`                                  |
+| PUT    | `/candidaturas/:id/etapas/:etapaId` | Mesmo corpo do POST; sem `anotacoes`, as anotações são limpas |
+| DELETE | `/candidaturas/:id/etapas/:etapaId` | `404` se a etapa pertence a outra candidatura                 |
+
+`tipo`: `TRIAGEM`, `ENTREVISTA_RH`, `ENTREVISTA_TECNICA`, `TESTE_TECNICO`, `PROPOSTA` ou `OUTRO`. `data` é um instante em ISO 8601 **com fuso** (`2026-11-05T14:00:00-03:00` ou terminado em `Z`); datas sem fuso são recusadas, para a hora não depender do servidor, e a API sempre devolve em UTC. Anotações têm até 5.000 caracteres. Criar etapas não muda o status da candidatura.
+
 ### Currículos
 
 Cada pessoa vê e altera só os próprios currículos (o de outra pessoa responde `404`). **Só um currículo fica ativo por vez**, e é o ativo que a análise de vagas vai usar. O banco garante isso com um índice único parcial, então nem duas requisições simultâneas conseguem deixar dois ativos.
