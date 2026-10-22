@@ -1,0 +1,172 @@
+# Requisições da API do JobPilot para a extensão REST Client do VS Code
+# (humao.rest-client). Clique em "Send Request" acima de cada bloco.
+#
+# Ordem sugerida na primeira vez:
+#   1. cadastro (só se a conta ainda não existir)
+#   2. login (guarda o token usado por todas as outras requisições)
+#   3. criarEmpresa
+#   4. criarVaga
+# O token e os IDs são capturados das respostas e reaproveitados nas demais requisições.
+
+@baseUrl = http://localhost:3333
+@token = {{login.response.body.accessToken}}
+@refreshToken = {{login.response.body.refreshToken}}
+@empresaId = {{criarEmpresa.response.body.id}}
+@vagaId = {{criarVaga.response.body.id}}
+
+### Health check
+GET {{baseUrl}}/health
+
+
+###############################################################
+# Autenticação
+###############################################################
+
+### Cadastro (devolve usuário + tokens)
+# @name cadastro
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "nome": "Ana Souza",
+  "email": "ana@exemplo.com",
+  "senha": "senha-forte-123"
+}
+
+### Login (rode este para preencher o token)
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "ana@exemplo.com",
+  "senha": "senha-forte-123"
+}
+
+### Usuário logado
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{token}}
+
+### Renovar tokens
+POST {{baseUrl}}/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+### Erro esperado: senha errada (401)
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "ana@exemplo.com",
+  "senha": "errada"
+}
+
+
+###############################################################
+# Empresas
+###############################################################
+
+### Criar empresa
+# @name criarEmpresa
+POST {{baseUrl}}/empresas
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "nome": "Nubank",
+  "site": "https://nubank.com.br"
+}
+
+### Listar empresas
+GET {{baseUrl}}/empresas
+Authorization: Bearer {{token}}
+
+### Buscar empresas pelo nome
+GET {{baseUrl}}/empresas?busca=nu
+Authorization: Bearer {{token}}
+
+### Ver empresa
+GET {{baseUrl}}/empresas/{{empresaId}}
+Authorization: Bearer {{token}}
+
+### Editar empresa
+PUT {{baseUrl}}/empresas/{{empresaId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "nome": "Nu Pagamentos",
+  "site": "https://nubank.com.br"
+}
+
+### Remover empresa (409 enquanto ela tiver vagas)
+DELETE {{baseUrl}}/empresas/{{empresaId}}
+Authorization: Bearer {{token}}
+
+
+###############################################################
+# Vagas
+###############################################################
+
+### Criar vaga
+# @name criarVaga
+POST {{baseUrl}}/vagas
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "empresaId": "{{empresaId}}",
+  "titulo": "Desenvolvedora Vue",
+  "descricao": "Front-end com Vue 3, TypeScript e Pinia",
+  "url": "https://nubank.com.br/vagas/123",
+  "modalidade": "REMOTO",
+  "senioridade": "JUNIOR"
+}
+
+### Listar vagas
+GET {{baseUrl}}/vagas
+Authorization: Bearer {{token}}
+
+### Filtrar vagas (modalidade: REMOTO | HIBRIDO | PRESENCIAL)
+GET {{baseUrl}}/vagas?modalidade=REMOTO&senioridade=JUNIOR&busca=vue
+Authorization: Bearer {{token}}
+
+### Vagas de uma empresa
+GET {{baseUrl}}/vagas?empresaId={{empresaId}}
+Authorization: Bearer {{token}}
+
+### Ver vaga
+GET {{baseUrl}}/vagas/{{vagaId}}
+Authorization: Bearer {{token}}
+
+### Editar vaga
+PUT {{baseUrl}}/vagas/{{vagaId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "empresaId": "{{empresaId}}",
+  "titulo": "Desenvolvedora Vue Pleno",
+  "descricao": "Front-end com Vue 3, TypeScript e Pinia",
+  "modalidade": "HIBRIDO",
+  "senioridade": "PLENO"
+}
+
+### Remover vaga
+DELETE {{baseUrl}}/vagas/{{vagaId}}
+Authorization: Bearer {{token}}
+
+### Erro esperado: validação (400 com detalhes por campo)
+POST {{baseUrl}}/vagas
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "empresaId": "{{empresaId}}",
+  "titulo": "",
+  "descricao": "",
+  "modalidade": "LUA"
+}
