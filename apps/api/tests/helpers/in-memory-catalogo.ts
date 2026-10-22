@@ -130,6 +130,12 @@ export function createInMemoryCatalogo() {
       Object.assign(candidatura, data, { atualizadoEm: new Date() })
       return withVaga(candidatura)
     },
+    updateStatus: async (id, de, para) => {
+      const candidatura = candidaturasDb.find((c) => c.id === id)
+      if (!candidatura || candidatura.status !== de) return null
+      Object.assign(candidatura, { status: para, atualizadoEm: new Date() })
+      return withVaga(candidatura)
+    },
     delete: async (id) => {
       candidaturasDb.splice(
         candidaturasDb.findIndex((c) => c.id === id),

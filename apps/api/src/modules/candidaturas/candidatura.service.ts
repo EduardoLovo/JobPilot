@@ -96,7 +96,16 @@ export function createCandidaturaService(
         )
       }
 
-      return paraApi(await candidaturas.update(id, { status: novo }))
+      // Grava só se o status ainda for o que foi lido; senão alguém mudou no meio do caminho
+      const atualizada = await candidaturas.updateStatus(id, atual.status, novo)
+      if (!atualizada) {
+        throw new AppError(
+          409,
+          'A candidatura foi alterada ao mesmo tempo. Atualize a página e tente de novo',
+        )
+      }
+
+      return paraApi(atualizada)
     },
 
     async delete(id: string, usuarioId: string) {

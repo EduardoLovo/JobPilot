@@ -295,6 +295,63 @@ describe('Candidaturas', () => {
       expect(res.status).toBe(400)
     })
 
+    it('exige login e um status no corpo', async () => {
+      const { body: criada } = await candidatar()
+
+      const semLogin = await request(app)
+        .patch(`/candidaturas/${criada.id}/status`)
+        .send({ status: 'APLICADO' })
+      const semCorpo = await request(app)
+        .patch(`/candidaturas/${criada.id}/status`)
+        .set(auth)
+        .send({})
+
+      expect([semLogin.status, semCorpo.status]).toEqual([401, 400])
+    })
+
+    it('não grava uma transição inválida quando outra mudança aconteceu entre a leitura e a gravação', async () => {
+      // Duas requisições leem o status ao mesmo tempo. A primeira leva a candidatura de ENTREVISTA
+      // para OFERTA; a segunda ainda enxerga ENTREVISTA e pede APLICADO, que é permitido a partir
+      // de ENTREVISTA, mas não a partir de OFERTA (onde a candidatura está de verdade).
+      const usuarios = createInMemoryUsuarioRepository()
+      const catalogo = createInMemoryCatalogo()
+      let leituraAntiga: Awaited<ReturnType<typeof catalogo.candidaturas.findById>> = null
+      const appCorrida = createApp({
+        usuarios: usuarios.repo,
+        ...catalogo,
+        curriculos: createInMemoryCurriculos().repo,
+        etapas: createInMemoryEtapas().repo,
+        candidaturas: {
+          ...catalogo.candidaturas,
+          findById: async (id, usuarioId) =>
+            leituraAntiga ?? catalogo.candidaturas.findById(id, usuarioId),
+        },
+      })
+      const registro = await request(appCorrida)
+        .post('/auth/register')
+        .send({ nome: 'Ana Souza', email: 'ana@exemplo.com', senha: 'senha-forte-123' })
+      const headers = { Authorization: `Bearer ${registro.body.accessToken}` }
+      const vaga = await criarVaga(appCorrida, headers)
+      const { body: criada } = await request(appCorrida)
+        .post('/candidaturas')
+        .set(headers)
+        .send({ vagaId: vaga })
+      const mudar = (status: string) =>
+        request(appCorrida).patch(`/candidaturas/${criada.id}/status`).set(headers).send({ status })
+
+      await mudar('APLICADO')
+      await mudar('ENTREVISTA')
+      leituraAntiga = await catalogo.candidaturas.findById(criada.id, registro.body.usuario.id)
+      expect((await mudar('OFERTA')).status).toBe(200)
+
+      const res = await mudar('APLICADO')
+
+      expect(res.status).toBe(409)
+      leituraAntiga = null
+      const atual = await request(appCorrida).get(`/candidaturas/${criada.id}`).set(headers)
+      expect(atual.body.status).toBe('OFERTA')
+    })
+
     it('não muda o status da candidatura de outra pessoa', async () => {
       const authBia = await authHeader(app, bia)
       const { body: daAna } = await candidatar()

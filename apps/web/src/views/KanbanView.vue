@@ -39,20 +39,24 @@ async function carregar() {
 
 async function mover(candidatura: Candidatura, novo: StatusCandidatura) {
   erro.value = ''
-  const anterior = candidaturas.value
+  const posicao = candidaturas.value.findIndex((c) => c.id === candidatura.id)
 
-  // O card muda de coluna na hora; se a API recusar, tudo volta como estava. Enquanto espera,
-  // ele fica sem destinos permitidos para não aceitar um segundo movimento.
+  // O card muda de coluna na hora. Enquanto espera, ele fica sem destinos permitidos para não
+  // aceitar um segundo movimento (outros cards continuam livres para serem movidos).
   candidaturas.value = [
     { ...candidatura, status: novo, proximosStatus: [] },
-    ...anterior.filter((c) => c.id !== candidatura.id),
+    ...candidaturas.value.filter((c) => c.id !== candidatura.id),
   ]
 
   try {
     const atualizada = await candidaturasService.changeStatus(candidatura.id, novo)
     candidaturas.value = candidaturas.value.map((c) => (c.id === atualizada.id ? atualizada : c))
   } catch (e) {
-    candidaturas.value = anterior
+    // Desfaz só este card. Voltar a lista inteira a uma foto antiga apagaria também o que outros
+    // movimentos, feitos enquanto este esperava, já tinham conseguido.
+    const restantes = candidaturas.value.filter((c) => c.id !== candidatura.id)
+    restantes.splice(Math.min(posicao, restantes.length), 0, candidatura)
+    candidaturas.value = restantes
     erro.value = e instanceof ApiError ? e.message : 'Não foi possível mover a candidatura.'
   }
 }

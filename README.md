@@ -120,6 +120,8 @@ Cada pessoa vê e altera só as próprias candidaturas; a de outra pessoa respon
 
 Avança uma etapa por vez, pode voltar uma etapa (card arrastado sem querer) e reabrir uma candidatura encerrada. Não dá para pular direto de `INTERESSE` para `ENTREVISTA` ou `OFERTA`. As regras ficam em [status.ts](apps/api/src/modules/candidaturas/status.ts).
 
+A gravação do status é condicional: só muda se a candidatura ainda estiver no status que foi lido para validar a transição. Se outra requisição a alterou no meio do caminho, a resposta é `409` ("A candidatura foi alterada ao mesmo tempo"), e a regra de transição nunca é furada por duas requisições simultâneas.
+
 ### Etapas da candidatura
 
 As etapas (triagem, entrevistas, teste técnico, proposta) formam a linha do tempo de uma candidatura. Ficam aninhadas nela, e quem manda é o dono da candidatura: a de outra pessoa responde `404` em todas as rotas.
