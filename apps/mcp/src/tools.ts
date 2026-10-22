@@ -145,4 +145,66 @@ export function registrarFerramentas(
         }
       }),
   )
+
+  server.registerTool(
+    'mover_candidatura',
+    {
+      title: 'Mover candidatura',
+      description:
+        'Muda o status de uma candidatura (por exemplo, de APLICADO para ENTREVISTA). ' +
+        'ESTA FERRAMENTA ALTERA DADOS: confirme com a pessoa qual candidatura vai mover, e para ' +
+        'qual status, antes de usá-la. ' +
+        'Respeita as regras do kanban: avança uma etapa por vez, pode voltar uma etapa e reabrir ' +
+        'uma candidatura encerrada; não dá para pular etapas. ' +
+        'Pegue o id e os destinos permitidos (pode_mover_para) em listar_candidaturas.',
+      inputSchema: {
+        id: z.uuid().describe('Id da candidatura, como vem em listar_candidaturas'),
+        status: z.enum(STATUS).describe('Novo status da candidatura'),
+      },
+      annotations: {
+        readOnlyHint: false,
+        // Muda o status, mas dá para desfazer movendo de volta; nada é apagado
+        destructiveHint: false,
+        // Pedir o mesmo status duas vezes não muda nada além da primeira
+        idempotentHint: true,
+        openWorldHint: false,
+      },
+    },
+    ({ id, status }) =>
+      comoResultado(async () => {
+        const atual = await api.get<Candidatura>(`/candidaturas/${id}`)
+        const alvo = `${atual.vaga.titulo} (${atual.vaga.empresa.nome})`
+        const identificacao = { id, vaga: atual.vaga.titulo, empresa: atual.vaga.empresa.nome }
+
+        if (atual.status === status) {
+          return {
+            mudou: false,
+            mensagem: `A candidatura a ${alvo} já está em ${status}. Nada foi alterado.`,
+            ...identificacao,
+            status_anterior: atual.status,
+            status_atual: atual.status,
+            pode_mover_para: atual.proximosStatus,
+          }
+        }
+
+        // A lista de destinos vem da própria API, então as regras continuam num lugar só
+        if (!atual.proximosStatus.includes(status)) {
+          throw new JobPilotApiError(
+            409,
+            `Não é possível mover a candidatura a ${alvo} de ${atual.status} para ${status}. ` +
+              `Destinos permitidos a partir de ${atual.status}: ${atual.proximosStatus.join(', ')}.`,
+          )
+        }
+
+        const movida = await api.patch<Candidatura>(`/candidaturas/${id}/status`, { status })
+        return {
+          mudou: true,
+          mensagem: `Candidatura a ${alvo} movida de ${atual.status} para ${movida.status}.`,
+          ...identificacao,
+          status_anterior: atual.status,
+          status_atual: movida.status,
+          pode_mover_para: movida.proximosStatus,
+        }
+      }),
+  )
 }

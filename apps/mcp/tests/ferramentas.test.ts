@@ -14,7 +14,7 @@ const recente = candidaturaDe({
 
 describe('servidor MCP do JobPilot', () => {
   describe('ferramentas expostas', () => {
-    it('anuncia as três ferramentas, todas só de leitura e com descrição', async () => {
+    it('anuncia as quatro ferramentas, todas com descrição', async () => {
       const { fetchFalso } = apiFalsa(() => undefined)
       const client = await conectar(fetchFalso)
 
@@ -23,12 +23,25 @@ describe('servidor MCP do JobPilot', () => {
       expect(tools.map((t) => t.name).sort()).toEqual([
         'detalhar_candidatura',
         'listar_candidaturas',
+        'mover_candidatura',
         'status_api',
       ])
       for (const ferramenta of tools) {
-        expect(ferramenta.annotations?.readOnlyHint).toBe(true)
         expect(ferramenta.description?.length).toBeGreaterThan(20)
       }
+    })
+
+    it('marca como só de leitura todas as ferramentas, exceto a que altera dados', async () => {
+      const { fetchFalso } = apiFalsa(() => undefined)
+      const client = await conectar(fetchFalso)
+
+      const { tools } = await client.listTools()
+
+      const porNome = Object.fromEntries(tools.map((t) => [t.name, t.annotations]))
+      expect(porNome.status_api?.readOnlyHint).toBe(true)
+      expect(porNome.listar_candidaturas?.readOnlyHint).toBe(true)
+      expect(porNome.detalhar_candidatura?.readOnlyHint).toBe(true)
+      expect(porNome.mover_candidatura?.readOnlyHint).toBe(false)
     })
 
     it('descreve os parâmetros para o Claude saber como chamar', async () => {
