@@ -258,6 +258,103 @@ describe('KanbanView', () => {
     })
   })
 
+  describe('movimentos em sequência e simultâneos', () => {
+    const vagaNode = { id: 'v2', titulo: 'Dev Node', empresa: { id: 'e2', nome: 'Stone' } }
+    const doisCards = () => [
+      candidaturaDe({ id: 'c1' }),
+      candidaturaDe({ id: 'c2', vaga: vagaNode }),
+    ]
+
+    it('uma falha não desfaz outro movimento que deu certo', async () => {
+      const responder: Record<string, (resposta: Response) => void> = {}
+      stubApi(({ method, path }) => {
+        if (method !== 'PATCH') return jsonResponse(200, doisCards())
+        return new Promise<Response>((resolve) => (responder[path.split('/')[2]] = resolve))
+      })
+      const wrapper = await montar()
+
+      // Os dois movimentos saem ao mesmo tempo, como numa rede lenta
+      await seletor(wrapper, 'Desenvolvedora Vue').setValue('APLICADO')
+      await seletor(wrapper, 'Dev Node').setValue('APLICADO')
+      await flushPromises()
+
+      // O de "Dev Node" dá certo; depois o de "Desenvolvedora Vue" é recusado
+      responder.c2(
+        jsonResponse(200, candidaturaDe({ id: 'c2', status: 'APLICADO', vaga: vagaNode })),
+      )
+      await flushPromises()
+      responder.c1(jsonResponse(409, { erro: 'Não é possível mover a candidatura' }))
+      await flushPromises()
+
+      expect(titulosDa(wrapper, 'INTERESSE')).toEqual(['Desenvolvedora Vue'])
+      expect(titulosDa(wrapper, 'APLICADO')).toEqual(['Dev Node'])
+    })
+
+    it('depois de uma falha, o card volta a poder ser movido', async () => {
+      let tentativas = 0
+      const { calls } = stubApi(({ method }) => {
+        if (method !== 'PATCH') return jsonResponse(200, [candidaturaDe()])
+        tentativas += 1
+        return tentativas === 1
+          ? jsonResponse(409, { erro: 'Não é possível mover a candidatura' })
+          : jsonResponse(200, candidaturaDe({ status: 'APLICADO' }))
+      })
+      const wrapper = await montar()
+
+      await seletor(wrapper).setValue('APLICADO')
+      await flushPromises()
+      expect(titulosDa(wrapper, 'INTERESSE')).toEqual(['Desenvolvedora Vue'])
+
+      await seletor(wrapper).setValue('APLICADO')
+      await flushPromises()
+
+      expect(calls().filter((c) => c.method === 'PATCH')).toHaveLength(2)
+      expect(titulosDa(wrapper, 'APLICADO')).toEqual(['Desenvolvedora Vue'])
+    })
+
+    it('com a API fora do ar, o card volta e aparece um aviso', async () => {
+      stubApi(({ method }) =>
+        method === 'PATCH'
+          ? Promise.reject(new TypeError('Failed to fetch'))
+          : jsonResponse(200, [candidaturaDe()]),
+      )
+      const wrapper = await montar()
+
+      await seletor(wrapper).setValue('APLICADO')
+      await flushPromises()
+
+      expect(titulosDa(wrapper, 'INTERESSE')).toEqual(['Desenvolvedora Vue'])
+      expect(wrapper.get('[data-test="erro"]').text()).toBe('Não foi possível mover a candidatura.')
+    })
+
+    it('o card movido vai para o topo da coluna de destino', async () => {
+      stubApi(({ method }) =>
+        method === 'PATCH'
+          ? jsonResponse(200, candidaturaDe({ id: 'c2', status: 'APLICADO', vaga: vagaNode }))
+          : jsonResponse(200, [
+              candidaturaDe({ id: 'c1', status: 'APLICADO' }),
+              candidaturaDe({ id: 'c2', vaga: vagaNode }),
+            ]),
+      )
+      const wrapper = await montar()
+
+      await seletor(wrapper, 'Dev Node').setValue('APLICADO')
+      await flushPromises()
+
+      expect(titulosDa(wrapper, 'APLICADO')).toEqual(['Dev Node', 'Desenvolvedora Vue'])
+    })
+
+    it('soltar algo que não é um card (sem arraste em andamento) não chama a API', async () => {
+      const { calls } = stubApi(() => jsonResponse(200, [candidaturaDe()]))
+      const wrapper = await montar()
+
+      await coluna(wrapper, 'APLICADO').trigger('drop', { dataTransfer: dataTransfer() })
+      await flushPromises()
+
+      expect(calls().some((c) => c.method === 'PATCH')).toBe(false)
+    })
+  })
+
   describe('remover', () => {
     it('remove o card depois de confirmar', async () => {
       vi.spyOn(window, 'confirm').mockReturnValue(true)

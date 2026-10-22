@@ -19,8 +19,9 @@ export interface CandidaturaCreate {
   proximoFollowup: Date | null
 }
 
+// O status não entra aqui de propósito: ele só muda por updateStatus, que confere o status anterior
 export type CandidaturaUpdate = Partial<
-  Pick<CandidaturaRecord, 'status' | 'dataAplicacao' | 'proximoFollowup'>
+  Pick<CandidaturaRecord, 'dataAplicacao' | 'proximoFollowup'>
 >
 
 // Toda consulta recebe o usuarioId: cada pessoa só enxerga as próprias candidaturas
@@ -30,6 +31,13 @@ export interface CandidaturaRepository {
   findByUsuarioVaga(usuarioId: string, vagaId: string): Promise<CandidaturaRecord | null>
   create(data: CandidaturaCreate): Promise<CandidaturaRecord>
   update(id: string, data: CandidaturaUpdate): Promise<CandidaturaRecord>
+  // Só muda o status se ele ainda for `de`; senão devolve null. Assim, quando duas requisições
+  // simultâneas leem o mesmo status, só uma grava e a regra de transição nunca é furada.
+  updateStatus(
+    id: string,
+    de: StatusCandidatura,
+    para: StatusCandidatura,
+  ): Promise<CandidaturaRecord | null>
   delete(id: string): Promise<void>
 }
 
@@ -57,6 +65,13 @@ export function createPrismaCandidaturaRepository(prisma: PrismaClient): Candida
       }),
     create: (data) => prisma.candidatura.create({ data, include }),
     update: (id, data) => prisma.candidatura.update({ where: { id }, data, include }),
+    updateStatus: async (id, de, para) => {
+      const { count } = await prisma.candidatura.updateMany({
+        where: { id, status: de },
+        data: { status: para },
+      })
+      return count === 0 ? null : prisma.candidatura.findUnique({ where: { id }, include })
+    },
     delete: async (id) => {
       await prisma.candidatura.delete({ where: { id } })
     },

@@ -1,5 +1,6 @@
 import request from 'supertest'
 import { afterAll, beforeEach, describe, expect, it } from 'vitest'
+import { createPrismaCandidaturaRepository } from '../../src/modules/candidaturas/candidatura.repository.js'
 import { ana, bia, cadastrar, createIntegrationApp, prisma, resetDatabase } from './helpers.js'
 
 const app = createIntegrationApp()
@@ -137,6 +138,65 @@ describe('Candidaturas (API + Prisma + Postgres)', () => {
     expect((await prisma.candidatura.findUniqueOrThrow({ where: { id: body.id } })).status).toBe(
       'OFERTA',
     )
+  })
+
+  describe('gravação condicional do status', () => {
+    const repositorio = createPrismaCandidaturaRepository(prisma)
+
+    it('grava quando o status ainda é o esperado e devolve a candidatura com a vaga', async () => {
+      const { body } = await candidatar()
+
+      const atualizada = await repositorio.updateStatus(body.id, 'INTERESSE', 'APLICADO')
+
+      expect(atualizada).toMatchObject({ id: body.id, status: 'APLICADO', vaga: { id: vagaId } })
+      const salva = await prisma.candidatura.findUniqueOrThrow({ where: { id: body.id } })
+      expect(salva.status).toBe('APLICADO')
+    })
+
+    it('não grava, e devolve null, quando o status já mudou', async () => {
+      const { body } = await candidatar()
+      await prisma.candidatura.update({ where: { id: body.id }, data: { status: 'OFERTA' } })
+
+      // Quem pede achava que a candidatura ainda estava em ENTREVISTA
+      const atualizada = await repositorio.updateStatus(body.id, 'ENTREVISTA', 'APLICADO')
+
+      expect(atualizada).toBeNull()
+      const salva = await prisma.candidatura.findUniqueOrThrow({ where: { id: body.id } })
+      expect(salva.status).toBe('OFERTA')
+    })
+
+    it('atualiza a data de alteração, que ordena os cards do kanban', async () => {
+      const { body } = await candidatar()
+      const antes = (await prisma.candidatura.findUniqueOrThrow({ where: { id: body.id } }))
+        .atualizadoEm
+
+      await new Promise((resolver) => setTimeout(resolver, 20))
+      await repositorio.updateStatus(body.id, 'INTERESSE', 'APLICADO')
+
+      const depois = (await prisma.candidatura.findUniqueOrThrow({ where: { id: body.id } }))
+        .atualizadoEm
+      expect(depois.getTime()).toBeGreaterThan(antes.getTime())
+    })
+
+    it('mudanças simultâneas nunca furam a regra de transição', async () => {
+      const { body } = await candidatar()
+
+      // De ENTREVISTA vão OFERTA e APLICADO. Depois de OFERTA não dá para voltar a APLICADO, então
+      // "ambas deram certo" só é válido na ordem APLICADO e depois OFERTA, que termina em OFERTA.
+      for (let rodada = 0; rodada < 10; rodada++) {
+        await prisma.candidatura.update({ where: { id: body.id }, data: { status: 'ENTREVISTA' } })
+
+        const respostas = await Promise.all([mover(body.id, 'OFERTA'), mover(body.id, 'APLICADO')])
+
+        const status = respostas.map((r) => r.status)
+        expect(status.every((s) => s === 200 || s === 409)).toBe(true)
+        expect(status).toContain(200)
+        if (status.every((s) => s === 200)) {
+          const salva = await prisma.candidatura.findUniqueOrThrow({ where: { id: body.id } })
+          expect(salva.status).toBe('OFERTA')
+        }
+      }
+    })
   })
 
   it('apagar a candidatura apaga as etapas dela, mas não a vaga', async () => {
