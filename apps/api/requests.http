@@ -13,6 +13,7 @@
 @refreshToken = {{login.response.body.refreshToken}}
 @empresaId = {{criarEmpresa.response.body.id}}
 @vagaId = {{criarVaga.response.body.id}}
+@candidaturaId = {{criarCandidatura.response.body.id}}
 
 ### Health check
 GET {{baseUrl}}/health
@@ -170,3 +171,63 @@ Content-Type: application/json
   "descricao": "",
   "modalidade": "LUA"
 }
+
+
+###############################################################
+# Candidaturas (rode "Criar vaga" antes)
+###############################################################
+
+### Candidatar-se à vaga (nasce como INTERESSE)
+# @name criarCandidatura
+POST {{baseUrl}}/candidaturas
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "vagaId": "{{vagaId}}",
+  "proximoFollowup": "2026-11-05"
+}
+
+### Listar minhas candidaturas
+GET {{baseUrl}}/candidaturas
+Authorization: Bearer {{token}}
+
+### Filtrar por status (INTERESSE | APLICADO | ENTREVISTA | OFERTA | ENCERRADO)
+GET {{baseUrl}}/candidaturas?status=APLICADO
+Authorization: Bearer {{token}}
+
+### Ver candidatura
+GET {{baseUrl}}/candidaturas/{{candidaturaId}}
+Authorization: Bearer {{token}}
+
+### Alterar as datas (null limpa o campo)
+PATCH {{baseUrl}}/candidaturas/{{candidaturaId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "dataAplicacao": "2026-10-22",
+  "proximoFollowup": null
+}
+
+### Mover para APLICADO
+PATCH {{baseUrl}}/candidaturas/{{candidaturaId}}/status
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "status": "APLICADO"
+}
+
+### Erro esperado: pular etapas (409). Rode com a candidatura em INTERESSE
+PATCH {{baseUrl}}/candidaturas/{{candidaturaId}}/status
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "status": "OFERTA"
+}
+
+### Remover candidatura
+DELETE {{baseUrl}}/candidaturas/{{candidaturaId}}
+Authorization: Bearer {{token}}

@@ -95,6 +95,31 @@ Todas as rotas exigem o access token.
 
 As vagas sempre voltam com `empresa: { id, nome }`. Valores aceitos: `modalidade` = `REMOTO`, `HIBRIDO`, `PRESENCIAL`; `senioridade` = `ESTAGIO`, `JUNIOR`, `PLENO`, `SENIOR`, `ESPECIALISTA`.
 
+### Candidaturas
+
+Cada pessoa vê e altera só as próprias candidaturas; a de outra pessoa responde `404`, igual a uma que não existe. Cada candidatura volta com `vaga: { id, titulo, empresa }`, as datas como `AAAA-MM-DD` e `proximosStatus`, a lista de status para onde ela pode ser movida (o kanban usa isso para saber onde o card pode ser solto).
+
+| Método | Rota                       | Observação                                                                      |
+| ------ | -------------------------- | ------------------------------------------------------------------------------- |
+| GET    | `/candidaturas`            | Mais recentemente alterada primeiro; filtros `?status=&vagaId=`                 |
+| POST   | `/candidaturas`            | `{ vagaId, proximoFollowup? }`; nasce como `INTERESSE`; `409` se já existe      |
+| GET    | `/candidaturas/:id`        |                                                                                 |
+| PATCH  | `/candidaturas/:id`        | `{ dataAplicacao?, proximoFollowup? }`; só o que for enviado muda, `null` limpa |
+| PATCH  | `/candidaturas/:id/status` | `{ status }`; `409` se a transição não é permitida                              |
+| DELETE | `/candidaturas/:id`        | Remove também as etapas e a análise da candidatura                              |
+
+**Transições de status permitidas** (qualquer outra responde `409`):
+
+| De           | Para                                             |
+| ------------ | ------------------------------------------------ |
+| `INTERESSE`  | `APLICADO`, `ENCERRADO`                          |
+| `APLICADO`   | `INTERESSE`, `ENTREVISTA`, `OFERTA`, `ENCERRADO` |
+| `ENTREVISTA` | `APLICADO`, `OFERTA`, `ENCERRADO`                |
+| `OFERTA`     | `ENTREVISTA`, `ENCERRADO`                        |
+| `ENCERRADO`  | `INTERESSE`, `APLICADO`, `ENTREVISTA` (reabrir)  |
+
+Avança uma etapa por vez, pode voltar uma etapa (card arrastado sem querer) e reabrir uma candidatura encerrada. Não dá para pular direto de `INTERESSE` para `ENTREVISTA` ou `OFERTA`. As regras ficam em [status.ts](apps/api/src/modules/candidaturas/status.ts).
+
 ### Erros
 
 Erros vêm como `{ "erro": "mensagem" }`. Erros de validação (`400`) trazem também `detalhes` com o campo e a mensagem.
