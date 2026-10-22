@@ -1,0 +1,148 @@
+// Modelo de dados do JobPilot (docs/JobPilot-planejamento.md, seção 3)
+// Convenção: models e campos em camelCase no código, tabelas e colunas em snake_case no banco
+
+generator client {
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma"
+  moduleFormat        = "esm"
+  importFileExtension = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum StatusCandidatura {
+  INTERESSE
+  APLICADO
+  ENTREVISTA
+  OFERTA
+  ENCERRADO
+
+  @@map("status_candidatura")
+}
+
+enum TipoEtapa {
+  TRIAGEM
+  ENTREVISTA_RH
+  ENTREVISTA_TECNICA
+  TESTE_TECNICO
+  PROPOSTA
+  OUTRO
+
+  @@map("tipo_etapa")
+}
+
+enum Modalidade {
+  REMOTO
+  HIBRIDO
+  PRESENCIAL
+
+  @@map("modalidade")
+}
+
+enum Senioridade {
+  ESTAGIO
+  JUNIOR
+  PLENO
+  SENIOR
+  ESPECIALISTA
+
+  @@map("senioridade")
+}
+
+model Usuario {
+  id           String        @id @default(uuid()) @db.Uuid
+  nome         String
+  email        String        @unique
+  senhaHash    String        @map("senha_hash")
+  criadoEm     DateTime      @default(now()) @map("criado_em")
+  curriculos   Curriculo[]
+  candidaturas Candidatura[]
+
+  @@map("usuarios")
+}
+
+model Curriculo {
+  id        String      @id @default(uuid()) @db.Uuid
+  usuarioId String      @map("usuario_id") @db.Uuid
+  conteudo  String
+  ativo     Boolean     @default(false)
+  criadoEm  DateTime    @default(now()) @map("criado_em")
+  usuario   Usuario     @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  analises  AnaliseIa[]
+
+  @@index([usuarioId])
+  @@map("curriculos")
+}
+
+model Empresa {
+  id    String  @id @default(uuid()) @db.Uuid
+  nome  String
+  site  String?
+  vagas Vaga[]
+
+  @@map("empresas")
+}
+
+model Vaga {
+  id           String        @id @default(uuid()) @db.Uuid
+  empresaId    String        @map("empresa_id") @db.Uuid
+  titulo       String
+  descricao    String
+  url          String?
+  modalidade   Modalidade?
+  senioridade  Senioridade?
+  criadoEm     DateTime      @default(now()) @map("criado_em")
+  empresa      Empresa       @relation(fields: [empresaId], references: [id])
+  candidaturas Candidatura[]
+
+  @@index([empresaId])
+  @@map("vagas")
+}
+
+model Candidatura {
+  id              String            @id @default(uuid()) @db.Uuid
+  usuarioId       String            @map("usuario_id") @db.Uuid
+  vagaId          String            @map("vaga_id") @db.Uuid
+  status          StatusCandidatura @default(INTERESSE)
+  dataAplicacao   DateTime?         @map("data_aplicacao") @db.Date
+  proximoFollowup DateTime?         @map("proximo_followup") @db.Date
+  atualizadoEm    DateTime          @updatedAt @map("atualizado_em")
+  usuario         Usuario           @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  vaga            Vaga              @relation(fields: [vagaId], references: [id], onDelete: Cascade)
+  etapas          Etapa[]
+  analise         AnaliseIa?
+
+  // Uma pessoa se candidata uma vez a cada vaga
+  @@unique([usuarioId, vagaId])
+  @@index([usuarioId, status])
+  @@map("candidaturas")
+}
+
+model Etapa {
+  id            String      @id @default(uuid()) @db.Uuid
+  candidaturaId String      @map("candidatura_id") @db.Uuid
+  tipo          TipoEtapa
+  data          DateTime
+  anotacoes     String?
+  candidatura   Candidatura @relation(fields: [candidaturaId], references: [id], onDelete: Cascade)
+
+  @@index([candidaturaId])
+  @@map("etapas")
+}
+
+model AnaliseIa {
+  id               String      @id @default(uuid()) @db.Uuid
+  candidaturaId    String      @unique @map("candidatura_id") @db.Uuid
+  curriculoId      String      @map("curriculo_id") @db.Uuid
+  score            Int
+  palavrasFaltando Json        @map("palavras_faltando")
+  recomendacoes    String
+  geradaEm         DateTime    @default(now()) @map("gerada_em")
+  candidatura      Candidatura @relation(fields: [candidaturaId], references: [id], onDelete: Cascade)
+  curriculo        Curriculo   @relation(fields: [curriculoId], references: [id])
+
+  @@index([curriculoId])
+  @@map("analises_ia")
+}

@@ -36,6 +36,7 @@ Pré-requisitos: Node.js 20+, Docker Desktop e Git.
 npm install
 cp .env.example .env
 npm run db:up      # sobe PostgreSQL e n8n
+npm run db:migrate -w apps/api   # cria as tabelas e gera o cliente Prisma
 npm run dev:api    # http://localhost:3333/health
 npm run dev:web    # http://localhost:5173
 ```
