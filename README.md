@@ -56,6 +56,8 @@ O n8n fica em http://localhost:5678.
 
 ## API
 
+Todas as requisições abaixo estão prontas em [apps/api/requests.http](apps/api/requests.http), para usar com a extensão [REST Client](https://marketplace.visualstudio.com/items?itemName=humao.rest-client) do VS Code. O login guarda o token automaticamente para as outras requisições.
+
 ### Autenticação
 
 O access token vale 15 minutos e vai no header `Authorization: Bearer <token>`. O refresh token vale 7 dias e serve só para pedir um novo par de tokens.
