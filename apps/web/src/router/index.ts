@@ -1,6 +1,5 @@
 import { createRouter, createWebHistory, type RouteRecordRaw, type Router } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import HomeView from '@/views/HomeView.vue'
 
 declare module 'vue-router' {
   interface RouteMeta {
@@ -12,7 +11,13 @@ declare module 'vue-router' {
 }
 
 export const routes: RouteRecordRaw[] = [
-  { path: '/', name: 'home', component: HomeView, meta: { requiresAuth: true } },
+  // A página inicial é o kanban das candidaturas
+  {
+    path: '/',
+    name: 'home',
+    component: () => import('@/views/KanbanView.vue'),
+    meta: { requiresAuth: true },
+  },
   {
     path: '/vagas',
     name: 'vagas',

@@ -87,6 +87,7 @@ describe('RegisterView', () => {
 
     await preencher(wrapper)
 
-    expect(router.currentRoute.value.name).toBe('home')
+    // A página inicial é carregada sob demanda, então a navegação pode levar mais que um tick
+    await vi.waitFor(() => expect(router.currentRoute.value.name).toBe('home'))
   })
 })

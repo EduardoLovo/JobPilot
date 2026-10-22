@@ -8,7 +8,7 @@ interface MockedRequest {
 }
 
 // Troca o fetch por um que responde conforme a rota; /auth/me já vem pronto para as guardas de rota
-export function stubApi(handler: (req: MockedRequest) => Response | undefined) {
+export function stubApi(handler: (req: MockedRequest) => Response | Promise<Response> | undefined) {
   const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
     const path = String(url).replace(/^https?:\/\/[^/]+/, '')
     if (path === '/auth/me') return jsonResponse(200, usuarioAna)
