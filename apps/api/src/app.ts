@@ -13,6 +13,9 @@ import { createCurriculoService } from './modules/curriculos/curriculo.service.j
 import type { EmpresaRepository } from './modules/empresas/empresa.repository.js'
 import { createEmpresaRouter } from './modules/empresas/empresa.routes.js'
 import { createEmpresaService } from './modules/empresas/empresa.service.js'
+import type { EtapaRepository } from './modules/etapas/etapa.repository.js'
+import { createEtapaRouter } from './modules/etapas/etapa.routes.js'
+import { createEtapaService } from './modules/etapas/etapa.service.js'
 import type { VagaRepository } from './modules/vagas/vaga.repository.js'
 import { createVagaRouter } from './modules/vagas/vaga.routes.js'
 import { createVagaService } from './modules/vagas/vaga.service.js'
@@ -23,6 +26,7 @@ export interface AppDeps {
   vagas: VagaRepository
   candidaturas: CandidaturaRepository
   curriculos: CurriculoRepository
+  etapas: EtapaRepository
 }
 
 // O app é separado do server.ts para que os testes usem o Express sem abrir porta
@@ -45,6 +49,10 @@ export function createApp(deps: AppDeps) {
     createCandidaturaRouter(createCandidaturaService(deps.candidaturas, deps.vagas)),
   )
 
+  app.use(
+    '/candidaturas/:candidaturaId/etapas',
+    createEtapaRouter(createEtapaService(deps.etapas, deps.candidaturas)),
+  )
   app.use('/curriculos', createCurriculoRouter(createCurriculoService(deps.curriculos)))
 
   app.use(errorHandler)

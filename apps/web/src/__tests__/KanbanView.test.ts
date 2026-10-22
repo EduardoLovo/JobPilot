@@ -78,6 +78,17 @@ describe('KanbanView', () => {
       expect(card.text()).toContain('Follow-up em 05/11/2026')
     })
 
+    it('cada card leva aos detalhes e etapas, com um link que não sequestra o arrastar', async () => {
+      stubApi(() => jsonResponse(200, [candidaturaDe({ id: 'c7' })]))
+
+      const wrapper = await montar()
+
+      const link = wrapper.get('[data-test="detalhes"]')
+      expect(link.attributes('href')).toBe('/candidaturas/c7')
+      // Um link dentro de um card arrastável seria arrastado no lugar do card
+      expect(link.attributes('draggable')).toBe('false')
+    })
+
     it('orienta a pessoa quando ainda não há candidaturas', async () => {
       stubApi(() => jsonResponse(200, []))
 

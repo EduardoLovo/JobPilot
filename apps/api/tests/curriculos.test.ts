@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { createApp } from '../src/app.js'
 import { createInMemoryCatalogo } from './helpers/in-memory-catalogo.js'
 import { createInMemoryCurriculos } from './helpers/in-memory-curriculos.js'
+import { createInMemoryEtapas } from './helpers/in-memory-etapas.js'
 import { createInMemoryUsuarioRepository } from './helpers/in-memory-usuario-repository.js'
 import { authHeader, createTestApp } from './helpers/test-app.js'
 
@@ -230,6 +231,7 @@ describe('Currículos', () => {
       const appCorrida = createApp({
         usuarios: usuarios.repo,
         ...createInMemoryCatalogo(),
+        etapas: createInMemoryEtapas().repo,
         curriculos: {
           ...curriculos.repo,
           activate: async () => {

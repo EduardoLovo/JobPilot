@@ -171,6 +171,15 @@ onMounted(carregar)
             Follow-up em {{ formatarDia(candidatura.proximoFollowup) }}
           </p>
 
+          <RouterLink
+            class="detalhes"
+            draggable="false"
+            :to="{ name: 'candidatura', params: { id: candidatura.id } }"
+            data-test="detalhes"
+          >
+            Detalhes e etapas
+          </RouterLink>
+
           <div class="card-acoes">
             <select
               :aria-label="`Mover ${candidatura.vaga.titulo}`"
@@ -271,6 +280,12 @@ onMounted(carregar)
   margin: 0 0 4px;
   font-size: 13px;
   color: var(--cor-suave);
+}
+
+.detalhes {
+  display: inline-block;
+  margin-top: 2px;
+  font-size: 13px;
 }
 
 .card-acoes {
