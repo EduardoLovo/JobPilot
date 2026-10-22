@@ -54,6 +54,21 @@ O n8n fica em http://localhost:5678.
 | `npm run db:up`/`down` | Sobe ou derruba os containers   |
 | `npm run dev:mcp`      | Roda o servidor MCP via stdio   |
 
+## API
+
+### Autenticação
+
+O access token vale 15 minutos e vai no header `Authorization: Bearer <token>`. O refresh token vale 7 dias e serve só para pedir um novo par de tokens.
+
+| Método | Rota             | Corpo                    | Resposta                                  |
+| ------ | ---------------- | ------------------------ | ----------------------------------------- |
+| POST   | `/auth/register` | `{ nome, email, senha }` | `201` usuário + tokens                    |
+| POST   | `/auth/login`    | `{ email, senha }`       | `200` usuário + tokens                    |
+| POST   | `/auth/refresh`  | `{ refreshToken }`       | `200` novo `accessToken` e `refreshToken` |
+| GET    | `/auth/me`       | —                        | `200` usuário logado                      |
+
+Erros vêm como `{ "erro": "mensagem" }`. Erros de validação (`400`) trazem também `detalhes` com o campo e a mensagem.
+
 ## Usando o servidor MCP no Claude
 
 Gere o build (`npm run build -w apps/mcp`) e adicione ao Claude Code:

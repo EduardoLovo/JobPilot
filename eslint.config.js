@@ -23,6 +23,12 @@ export default tseslint.config(
     files: ['apps/api/**', 'apps/mcp/**', '*.js'],
     languageOptions: { globals: globals.node },
   },
+  {
+    // Parâmetros com _ são obrigatórios na assinatura mas não usados (ex.: next do error handler)
+    rules: {
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+    },
+  },
   // Desliga regras de formatação que conflitam com o Prettier
   prettier,
 )
