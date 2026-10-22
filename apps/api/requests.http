@@ -14,6 +14,7 @@
 @empresaId = {{criarEmpresa.response.body.id}}
 @vagaId = {{criarVaga.response.body.id}}
 @candidaturaId = {{criarCandidatura.response.body.id}}
+@curriculoId = {{criarCurriculo.response.body.id}}
 
 ### Health check
 GET {{baseUrl}}/health
@@ -231,3 +232,57 @@ Content-Type: application/json
 ### Remover candidatura
 DELETE {{baseUrl}}/candidaturas/{{candidaturaId}}
 Authorization: Bearer {{token}}
+
+
+###############################################################
+# Currículos (só um fica ativo por vez)
+###############################################################
+
+### Salvar currículo (o primeiro já nasce ativo)
+# @name criarCurriculo
+POST {{baseUrl}}/curriculos
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "conteudo": "Ana Souza, desenvolvedora front-end com Vue 3, TypeScript e Pinia. Experiência com testes e CI.",
+  "ativo": true
+}
+
+### Listar meus currículos
+GET {{baseUrl}}/curriculos
+Authorization: Bearer {{token}}
+
+### Ver o currículo ativo
+GET {{baseUrl}}/curriculos/ativo
+Authorization: Bearer {{token}}
+
+### Ver um currículo
+GET {{baseUrl}}/curriculos/{{curriculoId}}
+Authorization: Bearer {{token}}
+
+### Editar o texto
+PUT {{baseUrl}}/curriculos/{{curriculoId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "conteudo": "Ana Souza, desenvolvedora full stack com Vue 3, Node, PostgreSQL e testes automatizados."
+}
+
+### Ativar este currículo (o ativo atual é desativado)
+POST {{baseUrl}}/curriculos/{{curriculoId}}/ativar
+Authorization: Bearer {{token}}
+
+### Remover (409 se for o ativo e houver outros; apaga as análises feitas com ele)
+DELETE {{baseUrl}}/curriculos/{{curriculoId}}
+Authorization: Bearer {{token}}
+
+### Erro esperado: texto curto demais (400)
+POST {{baseUrl}}/curriculos
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "conteudo": "oi"
+}

@@ -2,6 +2,7 @@ import { createApp } from './app.js'
 import { prisma } from './lib/prisma.js'
 import { createPrismaUsuarioRepository } from './modules/auth/usuario.repository.js'
 import { createPrismaCandidaturaRepository } from './modules/candidaturas/candidatura.repository.js'
+import { createPrismaCurriculoRepository } from './modules/curriculos/curriculo.repository.js'
 import { createPrismaEmpresaRepository } from './modules/empresas/empresa.repository.js'
 import { createPrismaVagaRepository } from './modules/vagas/vaga.repository.js'
 
@@ -12,6 +13,7 @@ const app = createApp({
   empresas: createPrismaEmpresaRepository(prisma),
   vagas: createPrismaVagaRepository(prisma),
   candidaturas: createPrismaCandidaturaRepository(prisma),
+  curriculos: createPrismaCurriculoRepository(prisma),
 })
 
 app.listen(port, () => {

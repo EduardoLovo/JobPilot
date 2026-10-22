@@ -11,6 +11,16 @@ export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
     return
   }
 
+  // Erros do leitor de JSON do Express: o problema é do cliente, não do servidor
+  if (err?.type === 'entity.parse.failed') {
+    res.status(400).json({ erro: 'JSON inválido' })
+    return
+  }
+  if (err?.type === 'entity.too.large') {
+    res.status(413).json({ erro: 'Corpo da requisição grande demais' })
+    return
+  }
+
   if (err instanceof AppError) {
     res.status(err.statusCode).json({ erro: err.message })
     return

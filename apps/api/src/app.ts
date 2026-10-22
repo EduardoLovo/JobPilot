@@ -7,6 +7,9 @@ import type { UsuarioRepository } from './modules/auth/usuario.repository.js'
 import type { CandidaturaRepository } from './modules/candidaturas/candidatura.repository.js'
 import { createCandidaturaRouter } from './modules/candidaturas/candidatura.routes.js'
 import { createCandidaturaService } from './modules/candidaturas/candidatura.service.js'
+import type { CurriculoRepository } from './modules/curriculos/curriculo.repository.js'
+import { createCurriculoRouter } from './modules/curriculos/curriculo.routes.js'
+import { createCurriculoService } from './modules/curriculos/curriculo.service.js'
 import type { EmpresaRepository } from './modules/empresas/empresa.repository.js'
 import { createEmpresaRouter } from './modules/empresas/empresa.routes.js'
 import { createEmpresaService } from './modules/empresas/empresa.service.js'
@@ -19,6 +22,7 @@ export interface AppDeps {
   empresas: EmpresaRepository
   vagas: VagaRepository
   candidaturas: CandidaturaRepository
+  curriculos: CurriculoRepository
 }
 
 // O app é separado do server.ts para que os testes usem o Express sem abrir porta
@@ -40,6 +44,8 @@ export function createApp(deps: AppDeps) {
     '/candidaturas',
     createCandidaturaRouter(createCandidaturaService(deps.candidaturas, deps.vagas)),
   )
+
+  app.use('/curriculos', createCurriculoRouter(createCurriculoService(deps.curriculos)))
 
   app.use(errorHandler)
 

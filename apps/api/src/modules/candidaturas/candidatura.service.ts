@@ -1,4 +1,5 @@
 import { AppError } from '../../errors/app-error.js'
+import { violouUnicidade } from '../../shared/prisma-errors.js'
 import type { VagaRepository } from '../vagas/vaga.repository.js'
 import type {
   CandidaturaRecord,
@@ -28,10 +29,6 @@ function paraApi({ usuarioId: _usuarioId, ...candidatura }: CandidaturaRecord) {
     proximosStatus: proximosStatus(candidatura.status),
   }
 }
-
-// Duas requisições simultâneas (clique duplo) passam juntas pela checagem e uma cai no índice único
-const violouUnicidade = (erro: unknown) =>
-  typeof erro === 'object' && erro !== null && 'code' in erro && erro.code === 'P2002'
 
 export function createCandidaturaService(
   candidaturas: CandidaturaRepository,

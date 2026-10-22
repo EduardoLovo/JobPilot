@@ -1,12 +1,18 @@
 import request from 'supertest'
 import { createApp } from '../../src/app.js'
 import { createInMemoryCatalogo } from './in-memory-catalogo.js'
+import { createInMemoryCurriculos } from './in-memory-curriculos.js'
 import { createInMemoryUsuarioRepository } from './in-memory-usuario-repository.js'
 
 export function createTestApp() {
   const usuarios = createInMemoryUsuarioRepository()
-  const app = createApp({ usuarios: usuarios.repo, ...createInMemoryCatalogo() })
-  return { app, usuarios }
+  const curriculos = createInMemoryCurriculos()
+  const app = createApp({
+    usuarios: usuarios.repo,
+    ...createInMemoryCatalogo(),
+    curriculos: curriculos.repo,
+  })
+  return { app, usuarios, curriculos }
 }
 
 const ana = { nome: 'Ana Souza', email: 'ana@exemplo.com', senha: 'senha-forte-123' }

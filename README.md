@@ -120,9 +120,25 @@ Cada pessoa vê e altera só as próprias candidaturas; a de outra pessoa respon
 
 Avança uma etapa por vez, pode voltar uma etapa (card arrastado sem querer) e reabrir uma candidatura encerrada. Não dá para pular direto de `INTERESSE` para `ENTREVISTA` ou `OFERTA`. As regras ficam em [status.ts](apps/api/src/modules/candidaturas/status.ts).
 
+### Currículos
+
+Cada pessoa vê e altera só os próprios currículos (o de outra pessoa responde `404`). **Só um currículo fica ativo por vez**, e é o ativo que a análise de vagas vai usar. O banco garante isso com um índice único parcial, então nem duas requisições simultâneas conseguem deixar dois ativos.
+
+| Método | Rota                     | Observação                                                                      |
+| ------ | ------------------------ | ------------------------------------------------------------------------------- |
+| GET    | `/curriculos`            | Mais recente primeiro                                                           |
+| GET    | `/curriculos/ativo`      | `404` se a pessoa ainda não tem currículo                                       |
+| POST   | `/curriculos`            | `{ conteudo, ativo? }`; o primeiro já nasce ativo; `ativo: true` assume o lugar |
+| GET    | `/curriculos/:id`        |                                                                                 |
+| PUT    | `/curriculos/:id`        | `{ conteudo }`; não muda qual está ativo                                        |
+| POST   | `/curriculos/:id/ativar` | Troca o ativo: desativa o atual e ativa este                                    |
+| DELETE | `/curriculos/:id`        | `409` se for o ativo e houver outros; remove também as análises feitas com ele  |
+
+O texto tem de 30 a 30.000 caracteres. Em vez de apagar um currículo antigo, prefira ativar outro: remover apaga as análises de vagas feitas com ele.
+
 ### Erros
 
-Erros vêm como `{ "erro": "mensagem" }`. Erros de validação (`400`) trazem também `detalhes` com o campo e a mensagem.
+Erros vêm como `{ "erro": "mensagem" }`. Erros de validação (`400`) trazem também `detalhes` com o campo e a mensagem. JSON malformado responde `400` e corpo grande demais, `413`.
 
 ## Usando o servidor MCP no Claude
 

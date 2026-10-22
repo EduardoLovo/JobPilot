@@ -2,6 +2,7 @@ import request from 'supertest'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createApp } from '../src/app.js'
 import { createInMemoryCatalogo } from './helpers/in-memory-catalogo.js'
+import { createInMemoryCurriculos } from './helpers/in-memory-curriculos.js'
 import { createInMemoryUsuarioRepository } from './helpers/in-memory-usuario-repository.js'
 import { authHeader, createTestApp } from './helpers/test-app.js'
 
@@ -97,6 +98,7 @@ describe('Candidaturas', () => {
         usuarios: usuarios.repo,
         ...catalogo,
         candidaturas: { ...catalogo.candidaturas, findByUsuarioVaga: async () => null },
+        curriculos: createInMemoryCurriculos().repo,
       })
       const headers = await authHeader(appCorrida)
       const id = await criarVaga(appCorrida, headers)

@@ -17,6 +17,7 @@ function sair() {
     <nav v-if="auth.isAuthenticated" class="menu">
       <RouterLink :to="{ name: 'home' }">Candidaturas</RouterLink>
       <RouterLink :to="{ name: 'vagas' }">Vagas</RouterLink>
+      <RouterLink :to="{ name: 'curriculo' }">Currículo</RouterLink>
     </nav>
     <div v-if="auth.isAuthenticated" class="usuario">
       <span>{{ auth.usuario?.nome }}</span>
