@@ -52,6 +52,14 @@ describe('skills do projeto', () => {
       expect(descricao).toMatch(/Use quando/)
     })
 
+    // O currículo é o texto que representa a pessoa. Uma skill que o lê não pode, por um corte
+    // distraído, perder a regra que a impede de inventar experiência.
+    it('se lê o currículo, traz a regra de nunca inventar experiência', () => {
+      const leOCurriculo = corpo.includes('`obter_curriculo_ativo`')
+
+      expect(leOCurriculo ? /nunca invente/i.test(corpo) : true).toBe(true)
+    })
+
     // Convenção: ferramentas do MCP aparecem entre crases e em minúsculas com sublinhado
     // (`listar_candidaturas`). Se uma ferramenta for renomeada ou removida, a skill que a cita
     // precisa ser atualizada; este teste avisa antes de a skill mandar o Claude usar o que não existe.
