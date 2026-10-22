@@ -1,0 +1,27 @@
+ID,Sprint,Epico,Historia,Criterio de aceite,Pontos,Prioridade
+JP-00,0,Infra,Como dev quero um monorepo com Docker Compose (Postgres + n8n),docker compose up sobe API web banco e n8n,3,Alta
+JP-00b,0,Infra,Como dev quero CI no GitHub Actions,PR roda lint e testes automaticamente,2,Alta
+JP-01,1,Auth,Como usuária quero me cadastrar e fazer login,Login retorna JWT; senha com hash bcrypt,5,Alta
+JP-02,1,Dados,Como dev quero o schema Prisma com migrations,Todas as tabelas do ER criadas via migration,3,Alta
+JP-03,1,Vagas,Como usuária quero cadastrar empresas,CRUD de empresas com validação Zod,3,Media
+JP-04,1,Vagas,Como usuária quero cadastrar vagas,CRUD de vagas vinculado a empresa,5,Alta
+JP-05,1,Front,Como usuária quero telas de login e cadastro,Token salvo e rotas protegidas no Vue Router,3,Alta
+JP-06,1,Front,Como usuária quero listar e criar vagas,Lista com filtro e formulário validado,5,Alta
+JP-07,1,Testes,Como dev quero testes de integração de auth e vagas,Supertest cobre sucesso e erro,3,Alta
+JP-08,2,Candidaturas,Como usuária quero me candidatar a uma vaga cadastrada,Candidatura criada com status INTERESSE,3,Alta
+JP-09,2,Candidaturas,Como usuária quero ver um kanban das candidaturas,Colunas por status com drag-and-drop,8,Alta
+JP-10,2,Candidaturas,Como usuária quero registrar etapas (entrevista teste),Etapas listadas em linha do tempo,5,Media
+JP-11,2,Curriculo,Como usuária quero salvar meu currículo,Um currículo ativo por vez,3,Alta
+JP-12,2,Testes,Como dev quero testes unitários do kanban e das regras de status,Transições inválidas são bloqueadas,3,Alta
+JP-13,3,IA,Como usuária quero analisar compatibilidade com a vaga,Score 0-100 + palavras faltando em até 15s,8,Alta
+JP-14,3,n8n,Como dev quero o workflow de análise no n8n,Webhook -> agente -> PUT /analises,5,Alta
+JP-15,3,n8n,Como usuária quero lembrete de follow-up,Candidatura parada 7 dias gera mensagem,5,Media
+JP-16,3,Testes,Como dev quero validar o JSON do agente,Schema Zod rejeita resposta inválida e faz retry,2,Alta
+JP-17,4,MCP,Como usuária quero consultar candidaturas pelo Claude,Servidor MCP com listar e detalhar,5,Media
+JP-18,4,MCP,Como usuária quero mover candidaturas pelo Claude,Tool mover_etapa atualiza a API,3,Media
+JP-19,4,Skills,Como usuária quero a skill de preparação de entrevista,Skill gera roteiro usando dados do MCP,3,Baixa
+JP-20,4,Skills,Como usuária quero a skill de ajuste de currículo,Sugere reescrita para uma vaga,3,Baixa
+JP-21,4,n8n,Como usuária quero resumo semanal por e-mail,E-mail toda segunda com números da semana,3,Baixa
+JP-22,5,Front,Como usuária quero um dashboard,Gráfico por status e média de score,5,Media
+JP-23,5,Testes,Como dev quero testes E2E do fluxo principal,Playwright: login -> vaga -> kanban,5,Media
+JP-24,5,Infra,Como dev quero fazer deploy,App acessível por URL pública,5,Media

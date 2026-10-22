@@ -1,0 +1,41 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: jobpilot-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-jobpilot}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-jobpilot}
+      POSTGRES_DB: ${POSTGRES_DB:-jobpilot}
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-jobpilot}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: jobpilot-n8n
+    restart: unless-stopped
+    ports:
+      - '${N8N_PORT:-5678}:5678'
+    environment:
+      GENERIC_TIMEZONE: America/Sao_Paulo
+      TZ: America/Sao_Paulo
+      # Os dados internos do n8n ficam em SQLite no volume n8n-data,
+      # separados do banco da aplicação
+      # A API roda fora do Docker no dev; o n8n alcança ela por aqui
+      JOBPILOT_API_URL: http://host.docker.internal:${API_PORT:-3333}
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    volumes:
+      - n8n-data:/home/node/.n8n
+      - ./n8n/workflows:/workflows
+
+volumes:
+  postgres-data:
+  n8n-data:
