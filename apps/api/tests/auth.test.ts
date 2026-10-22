@@ -1,17 +1,15 @@
 import request from 'supertest'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { createApp } from '../src/app.js'
-import { createInMemoryUsuarioRepository } from './helpers/in-memory-usuario-repository.js'
+import { createTestApp } from './helpers/test-app.js'
 
 const ana = { nome: 'Ana Souza', email: 'Ana@Exemplo.com', senha: 'senha-forte-123' }
 
 describe('Auth', () => {
-  let app: ReturnType<typeof createApp>
-  let usuarios: ReturnType<typeof createInMemoryUsuarioRepository>
+  let app: ReturnType<typeof createTestApp>['app']
+  let usuarios: ReturnType<typeof createTestApp>['usuarios']
 
   beforeEach(() => {
-    usuarios = createInMemoryUsuarioRepository()
-    app = createApp({ usuarios: usuarios.repo })
+    ;({ app, usuarios } = createTestApp())
   })
 
   const register = (body: object = ana) => request(app).post('/auth/register').send(body)
