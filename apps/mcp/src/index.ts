@@ -1,33 +1,20 @@
 #!/usr/bin/env node
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
+import { createApiClient } from './api-client.js'
+import { lerConfig } from './config.js'
+import { createServer } from './server.js'
 
-const API_URL = process.env.JOBPILOT_API_URL ?? 'http://localhost:3333'
+// stdout é o canal do protocolo MCP: nada além de mensagens do protocolo pode sair nele.
+// Logs e erros vão para stderr.
+let config
+try {
+  config = lerConfig(process.env)
+} catch (erro) {
+  console.error(erro instanceof Error ? erro.message : erro)
+  process.exit(1)
+}
 
-const server = new McpServer({ name: 'jobpilot', version: '0.0.0' })
+const server = createServer(createApiClient(config))
 
-// Sprint 0: só uma ferramenta para provar a ligação Claude -> MCP -> API.
-// As ferramentas de candidaturas entram na Sprint 4.
-server.registerTool(
-  'status_api',
-  {
-    title: 'Status da API',
-    description: 'Verifica se a API do JobPilot está no ar',
-  },
-  async () => {
-    try {
-      const res = await fetch(`${API_URL}/health`)
-      const body = await res.text()
-      return { content: [{ type: 'text', text: `API respondeu ${res.status}: ${body}` }] }
-    } catch (err) {
-      return {
-        content: [{ type: 'text', text: `API fora do ar em ${API_URL}: ${String(err)}` }],
-        isError: true,
-      }
-    }
-  },
-)
-
-// stdout é o canal do protocolo MCP; logs vão para stderr
 await server.connect(new StdioServerTransport())
-console.error('Servidor MCP do JobPilot conectado via stdio')
+console.error(`Servidor MCP do JobPilot conectado via stdio (API em ${config.apiUrl})`)

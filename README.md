@@ -157,10 +157,84 @@ Erros vêm como `{ "erro": "mensagem" }`. Erros de validação (`400`) trazem ta
 
 ## Usando o servidor MCP no Claude
 
-Gere o build (`npm run build -w apps/mcp`) e adicione ao Claude Code:
+MCP (Model Context Protocol) é um jeito padronizado de dar **ferramentas** ao Claude. O servidor em `apps/mcp` é um programa pequeno que o Claude abre e com o qual conversa pela entrada e saída padrão (stdio). Quando você pergunta "quais candidaturas estão paradas?", o Claude escolhe uma ferramenta, o servidor consulta a API do JobPilot e devolve o resultado.
+
+```
+Claude  ⇄  servidor MCP (apps/mcp)  ⇄  API (apps/api)  ⇄  PostgreSQL
+```
+
+### Ferramentas
+
+Todas são só de leitura.
+
+| Ferramenta             | O que faz                                                                                                                  |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `listar_candidaturas`  | Lista as suas candidaturas, com os filtros `status` e `parada_ha_dias`; mostra os dias parada e para onde cada uma pode ir |
+| `detalhar_candidatura` | Mostra uma candidatura com a vaga completa (descrição) e a linha do tempo de etapas                                        |
+| `status_api`           | Verifica se a API está no ar (não precisa de login)                                                                        |
+
+"Parada" quer dizer sem mudança de status nem de datas: registrar uma etapa não zera a contagem.
+
+### Configurar
+
+O servidor entra na API com o seu e-mail e a sua senha do JobPilot e renova o login sozinho (o token vale 15 minutos). Por isso ele precisa de três variáveis de ambiente:
+
+| Variável           | Obrigatória | Exemplo                              |
+| ------------------ | ----------- | ------------------------------------ |
+| `JOBPILOT_EMAIL`   | sim         | `ana@exemplo.com`                    |
+| `JOBPILOT_SENHA`   | sim         | a senha da conta                     |
+| `JOBPILOT_API_URL` | não         | `http://localhost:3333` (é o padrão) |
+
+1. Suba o banco e a API (`npm run db:up` e `npm run dev:api`) e gere o build do servidor:
+
+   ```bash
+   npm run build -w apps/mcp
+   ```
+
+2. Registre o servidor no Claude Code, **de uma destas formas**:
+
+   **a) Pelo comando** (as opções vão antes do nome do servidor, e o `--` separa o nome do comando que o Claude executa):
+
+   ```bash
+   claude mcp add --env JOBPILOT_EMAIL=ana@exemplo.com --env JOBPILOT_SENHA=sua-senha jobpilot -- node D:/Dev/JobPilot/apps/mcp/dist/index.js
+   ```
+
+   **b) Por um arquivo `.mcp.json` na raiz do projeto**, que lê as variáveis do seu sistema e assim não guarda senha no arquivo:
+
+   ```json
+   {
+     "mcpServers": {
+       "jobpilot": {
+         "command": "node",
+         "args": ["apps/mcp/dist/index.js"],
+         "env": {
+           "JOBPILOT_EMAIL": "${JOBPILOT_EMAIL}",
+           "JOBPILOT_SENHA": "${JOBPILOT_SENHA}"
+         }
+       }
+     }
+   }
+   ```
+
+3. Reinicie o Claude Code e confira se o servidor conectou (`claude mcp list`, ou `/mcp` dentro do Claude Code). Depois é só perguntar: _"Quais candidaturas minhas estão paradas há mais de 7 dias?"_
+
+> **Atenção com a senha.** No jeito (a), ela fica em texto puro no arquivo de configuração do Claude; no (b), nas variáveis de ambiente do seu sistema. Use uma conta de desenvolvimento, e não uma senha que você usa em outro lugar.
+
+> **Os passos 2 e 3 não foram testados neste repositório.** O servidor em si foi testado de ponta a ponta (processo real, API real, por stdio), mas o registro no Claude depende da versão e das configurações da sua instalação. Se algo não conectar, a seção abaixo ajuda a achar o motivo.
+
+### Quando não funciona
+
+| O que aparece                                     | Causa provável                                                         |
+| ------------------------------------------------- | ---------------------------------------------------------------------- |
+| Servidor "failed" na lista, ao abrir              | Faltam `JOBPILOT_EMAIL` ou `JOBPILOT_SENHA` (o motivo sai no `stderr`) |
+| "O JobPilot recusou o login"                      | E-mail ou senha errados na configuração                                |
+| "Não consegui falar com a API do JobPilot em ..." | A API não está rodando (`npm run dev:api`) ou a URL está errada        |
+| A ferramenta não aparece                          | O build está desatualizado: rode `npm run build -w apps/mcp` de novo   |
+
+Para ver o servidor funcionando sem o Claude, o **MCP Inspector** abre uma tela de teste (defina as variáveis no terminal antes):
 
 ```bash
-claude mcp add jobpilot -- node D:/Dev/JobPilot/apps/mcp/dist/index.js
+npx @modelcontextprotocol/inspector node apps/mcp/dist/index.js
 ```
 
 ## Fluxo de trabalho

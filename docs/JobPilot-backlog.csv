@@ -13,14 +13,14 @@ JP-09,2,Candidaturas,Como usuária quero ver um kanban das candidaturas,Colunas 
 JP-10,2,Candidaturas,Como usuária quero registrar etapas (entrevista teste),Etapas listadas em linha do tempo,5,Media
 JP-11,2,Curriculo,Como usuária quero salvar meu currículo,Um currículo ativo por vez,3,Alta
 JP-12,2,Testes,Como dev quero testes unitários do kanban e das regras de status,Transições inválidas são bloqueadas,3,Alta
-JP-13,3,IA,Como usuária quero analisar compatibilidade com a vaga,Score 0-100 + palavras faltando em até 15s,8,Alta
-JP-14,3,n8n,Como dev quero o workflow de análise no n8n,Webhook -> agente -> PUT /analises,5,Alta
-JP-15,3,n8n,Como usuária quero lembrete de follow-up,Candidatura parada 7 dias gera mensagem,5,Media
-JP-16,3,Testes,Como dev quero validar o JSON do agente,Schema Zod rejeita resposta inválida e faz retry,2,Alta
-JP-17,4,MCP,Como usuária quero consultar candidaturas pelo Claude,Servidor MCP com listar e detalhar,5,Media
-JP-18,4,MCP,Como usuária quero mover candidaturas pelo Claude,Tool mover_etapa atualiza a API,3,Media
-JP-19,4,Skills,Como usuária quero a skill de preparação de entrevista,Skill gera roteiro usando dados do MCP,3,Baixa
-JP-20,4,Skills,Como usuária quero a skill de ajuste de currículo,Sugere reescrita para uma vaga,3,Baixa
+JP-13,4,IA,Como usuária quero analisar compatibilidade com a vaga,Score 0-100 + palavras faltando em até 15s,8,Alta
+JP-14,4,n8n,Como dev quero o workflow de análise no n8n,Webhook -> agente -> PUT /analises,5,Alta
+JP-15,4,n8n,Como usuária quero lembrete de follow-up,Candidatura parada 7 dias gera mensagem,5,Media
+JP-16,4,Testes,Como dev quero validar o JSON do agente,Schema Zod rejeita resposta inválida e faz retry,2,Alta
+JP-17,3,MCP,Como usuária quero consultar candidaturas pelo Claude,Servidor MCP com listar e detalhar,5,Media
+JP-18,3,MCP,Como usuária quero mover candidaturas pelo Claude,Tool mover_etapa atualiza a API,3,Media
+JP-19,3,Skills,Como usuária quero a skill de preparação de entrevista,Skill gera roteiro usando dados do MCP,3,Baixa
+JP-20,3,Skills,Como usuária quero a skill de ajuste de currículo,Sugere reescrita para uma vaga,3,Baixa
 JP-21,4,n8n,Como usuária quero resumo semanal por e-mail,E-mail toda segunda com números da semana,3,Baixa
 JP-22,5,Front,Como usuária quero um dashboard,Gráfico por status e média de score,5,Media
 JP-23,5,Testes,Como dev quero testes E2E do fluxo principal,Playwright: login -> vaga -> kanban,5,Media
