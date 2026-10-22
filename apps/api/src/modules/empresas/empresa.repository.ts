@@ -19,11 +19,14 @@ export interface EmpresaRepository {
 
 export function createPrismaEmpresaRepository(prisma: PrismaClient): EmpresaRepository {
   return {
-    list: (busca) =>
-      prisma.empresa.findMany({
-        where: busca ? { nome: { contains: busca, mode: 'insensitive' } } : undefined,
-        orderBy: { nome: 'asc' },
-      }),
+    // A ordenação do Postgres depende da collation do banco (no Docker é por byte: "iFood" vem
+    // depois de "Stone"), então a ordem alfabética é feita aqui. A lista de empresas é pequena.
+    list: async (busca) =>
+      (
+        await prisma.empresa.findMany({
+          where: busca ? { nome: { contains: busca, mode: 'insensitive' } } : undefined,
+        })
+      ).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')),
     findById: (id) => prisma.empresa.findUnique({ where: { id } }),
     create: (data) => prisma.empresa.create({ data }),
     update: (id, data) => prisma.empresa.update({ where: { id }, data }),

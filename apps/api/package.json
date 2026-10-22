@@ -12,6 +12,8 @@
     "start": "node dist/server.js",
     "test": "vitest run",
     "test:watch": "vitest",
+    "pretest:integration": "prisma generate",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
     "typecheck": "prisma generate && tsc --noEmit"
   },
   "dependencies": {
@@ -28,7 +30,9 @@
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^26.6.5",
+    "@types/pg": "^8.23.1",
     "@types/supertest": "^7.2.1",
+    "pg": "^8.23.1",
     "prisma": "^7.10.1",
     "supertest": "^7.3.1",
     "tsx": "^4.23.15",

@@ -45,14 +45,21 @@ O n8n fica em http://localhost:5678.
 
 ## Scripts
 
-| Comando                | O que faz                       |
-| ---------------------- | ------------------------------- |
-| `npm test`             | Roda os testes de todos os apps |
-| `npm run lint`         | ESLint em todo o monorepo       |
-| `npm run format`       | Formata o código com Prettier   |
-| `npm run build`        | Gera o build de todos os apps   |
-| `npm run db:up`/`down` | Sobe ou derruba os containers   |
-| `npm run dev:mcp`      | Roda o servidor MCP via stdio   |
+| Comando                    | O que faz                                                           |
+| -------------------------- | ------------------------------------------------------------------- |
+| `npm test`                 | Testes rápidos de todos os apps, sem banco                          |
+| `npm run test:integration` | Testes da API com Prisma e Postgres de verdade (precisa do `db:up`) |
+| `npm run lint`             | ESLint em todo o monorepo                                           |
+| `npm run format`           | Formata o código com Prettier                                       |
+| `npm run build`            | Gera o build de todos os apps                                       |
+| `npm run db:up`/`down`     | Sobe ou derruba os containers                                       |
+| `npm run dev:mcp`          | Roda o servidor MCP via stdio                                       |
+
+## Testes
+
+- **Rápidos (`npm test`):** a API roda com repositórios em memória e o front com `fetch` simulado. Levam poucos segundos e não precisam de Docker.
+- **Integração (`npm run test:integration`):** a API de verdade com Prisma e Postgres. Cobrem as regras que vivem no banco (e-mail único, cascatas, chaves estrangeiras, busca sem diferenciar maiúsculas). Rodam no banco `jobpilot_test`, que é criado e migrado sozinho, e a cada teste as tabelas são esvaziadas. Por segurança, os testes se recusam a rodar em um banco cujo nome não termine com `_test`, então os seus dados de desenvolvimento nunca são tocados.
+- O CI roda os dois tipos em todo PR, com um Postgres no próprio workflow.
 
 ## API
 
