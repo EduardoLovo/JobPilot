@@ -31,6 +31,12 @@ interface Etapa {
   anotacoes: string | null
 }
 
+interface Curriculo {
+  id: string
+  conteudo: string
+  criadoEm: string
+}
+
 const DIA_EM_MS = 86_400_000
 
 // O resultado de uma ferramenta é texto. Erros viram resultado com isError (e não exceção), para o
@@ -143,6 +149,24 @@ export function registrarFerramentas(
           },
           etapas: etapas.map((e) => ({ tipo: e.tipo, data: e.data, anotacoes: e.anotacoes })),
         }
+      }),
+  )
+
+  server.registerTool(
+    'obter_curriculo_ativo',
+    {
+      title: 'Obter currículo ativo',
+      description:
+        'Devolve o texto do currículo ativo da pessoa (só um fica ativo por vez) e a data em que ' +
+        'foi salvo. Use para comparar o currículo com uma vaga, preparar uma entrevista ou ' +
+        'sugerir ajustes. Se a pessoa ainda não salvou um currículo, avisa para cadastrá-lo na ' +
+        'tela Currículo do JobPilot.',
+      annotations: { readOnlyHint: true },
+    },
+    () =>
+      comoResultado(async () => {
+        const curriculo = await api.get<Curriculo>('/curriculos/ativo')
+        return { id: curriculo.id, salvo_em: curriculo.criadoEm, conteudo: curriculo.conteudo }
       }),
   )
 

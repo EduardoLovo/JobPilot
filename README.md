@@ -165,14 +165,15 @@ Claude  ⇄  servidor MCP (apps/mcp)  ⇄  API (apps/api)  ⇄  PostgreSQL
 
 ### Ferramentas
 
-Três são só de leitura. A `mover_candidatura` **altera dados**: muda o status de uma candidatura, e por isso a descrição dela orienta o Claude a confirmar com você antes de usá-la.
+Quatro são só de leitura. A `mover_candidatura` **altera dados**: muda o status de uma candidatura, e por isso a descrição dela orienta o Claude a confirmar com você antes de usá-la.
 
-| Ferramenta             | O que faz                                                                                                                  |
-| ---------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `listar_candidaturas`  | Lista as suas candidaturas, com os filtros `status` e `parada_ha_dias`; mostra os dias parada e para onde cada uma pode ir |
-| `detalhar_candidatura` | Mostra uma candidatura com a vaga completa (descrição) e a linha do tempo de etapas                                        |
-| `mover_candidatura`    | Muda o status de uma candidatura (`id` e `status`), com as mesmas regras do kanban; **altera dados**                       |
-| `status_api`           | Verifica se a API está no ar (não precisa de login)                                                                        |
+| Ferramenta              | O que faz                                                                                                                  |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `listar_candidaturas`   | Lista as suas candidaturas, com os filtros `status` e `parada_ha_dias`; mostra os dias parada e para onde cada uma pode ir |
+| `detalhar_candidatura`  | Mostra uma candidatura com a vaga completa (descrição) e a linha do tempo de etapas                                        |
+| `obter_curriculo_ativo` | Devolve o texto do seu currículo ativo e a data em que foi salvo (usada pelas skills)                                      |
+| `mover_candidatura`     | Muda o status de uma candidatura (`id` e `status`), com as mesmas regras do kanban; **altera dados**                       |
+| `status_api`            | Verifica se a API está no ar (não precisa de login)                                                                        |
 
 "Parada" quer dizer sem mudança de status nem de datas: registrar uma etapa não zera a contagem.
 
@@ -239,6 +240,24 @@ Para ver o servidor funcionando sem o Claude, o **MCP Inspector** abre uma tela 
 ```bash
 npx @modelcontextprotocol/inspector node apps/mcp/dist/index.js
 ```
+
+## Skills do Claude
+
+Uma **skill** é uma pasta com um arquivo `SKILL.md`: instruções em texto que o Claude carrega **quando a tarefa pede**. O cabeçalho do arquivo tem o `name` e uma `description`, que o Claude lê para decidir se vale usar a skill; o resto é o passo a passo. A diferença para o MCP: o MCP dá ao Claude **ferramentas** (acesso aos seus dados e ações), e a skill dá **um modo de trabalhar** (um roteiro e um formato). As duas se completam: a skill diz o que fazer, e o MCP traz os dados.
+
+As skills do projeto ficam em [.claude/skills/](.claude/skills), e o Claude Code as lê dali quando você abre este projeto.
+
+| Skill                   | Quando usar                                                | O que faz                                                                                                                                         |
+| ----------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `preparacao-entrevista` | "Me prepara para a entrevista da vaga X", "o que estudar?" | Busca a candidatura, a vaga completa, as etapas anteriores e o currículo ativo, e monta um roteiro: vaga × currículo, perguntas, lacunas e estudo |
+
+Exige o servidor MCP conectado (veja acima). A skill só **lê** dados e não usa a `mover_candidatura`.
+
+**Como testar:** com o servidor registrado e uma candidatura em Entrevista (e um currículo ativo salvo), peça no Claude Code: _"Me prepara para a entrevista da candidatura da empresa X"_. O roteiro deve citar trechos da vaga e do seu currículo, usar as anotações das etapas anteriores e marcar como "exemplo" qualquer coisa que não esteja no seu currículo.
+
+Um teste automático (`apps/mcp/tests/skills.test.ts`) confere o formato de cada skill (nome igual ao da pasta, descrição com "Use quando") e que ela só cita ferramentas que o servidor MCP realmente oferece.
+
+> **Não foi testado aqui o Claude de fato usando a skill.** O formato e as ferramentas citadas são verificados por testes, e os dados que a skill pede foram buscados pelo servidor real, mas o roteiro em si depende do seu Claude Code com o servidor registrado.
 
 ## Fluxo de trabalho
 

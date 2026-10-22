@@ -14,7 +14,7 @@ const recente = candidaturaDe({
 
 describe('servidor MCP do JobPilot', () => {
   describe('ferramentas expostas', () => {
-    it('anuncia as quatro ferramentas, todas com descrição', async () => {
+    it('anuncia as cinco ferramentas, todas com descrição', async () => {
       const { fetchFalso } = apiFalsa(() => undefined)
       const client = await conectar(fetchFalso)
 
@@ -24,6 +24,7 @@ describe('servidor MCP do JobPilot', () => {
         'detalhar_candidatura',
         'listar_candidaturas',
         'mover_candidatura',
+        'obter_curriculo_ativo',
         'status_api',
       ])
       for (const ferramenta of tools) {
@@ -41,6 +42,7 @@ describe('servidor MCP do JobPilot', () => {
       expect(porNome.status_api?.readOnlyHint).toBe(true)
       expect(porNome.listar_candidaturas?.readOnlyHint).toBe(true)
       expect(porNome.detalhar_candidatura?.readOnlyHint).toBe(true)
+      expect(porNome.obter_curriculo_ativo?.readOnlyHint).toBe(true)
       expect(porNome.mover_candidatura?.readOnlyHint).toBe(false)
     })
 
@@ -228,6 +230,47 @@ describe('servidor MCP do JobPilot', () => {
 
       expect(resultado.isError).toBe(true)
       expect(chamadas).toHaveLength(0)
+    })
+  })
+
+  describe('obter_curriculo_ativo', () => {
+    const textoDoCurriculo = 'Ana Souza\nDesenvolvedora front-end: Vue 3, TypeScript e Pinia.'
+
+    it('devolve o texto do currículo ativo, com acentos e quebras de linha intactos', async () => {
+      const { fetchFalso, chamadas } = apiFalsa(({ caminho }) =>
+        caminho === '/curriculos/ativo'
+          ? json(200, {
+              id: 'k1',
+              conteudo: textoDoCurriculo,
+              ativo: true,
+              criadoEm: '2026-10-20T12:00:00.000Z',
+            })
+          : undefined,
+      )
+      const client = await conectar(fetchFalso)
+
+      const resultado = await client.callTool({ name: 'obter_curriculo_ativo', arguments: {} })
+
+      expect(dadosDe(resultado)).toEqual({
+        id: 'k1',
+        salvo_em: '2026-10-20T12:00:00.000Z',
+        conteudo: textoDoCurriculo,
+      })
+      expect(chamadas.filter((c) => c.caminho === '/curriculos/ativo')).toHaveLength(1)
+    })
+
+    it('avisa que a pessoa ainda não tem currículo, sem tratar como falha técnica', async () => {
+      const { fetchFalso } = apiFalsa(({ caminho }) =>
+        caminho === '/curriculos/ativo'
+          ? json(404, { erro: 'Você ainda não tem um currículo ativo' })
+          : undefined,
+      )
+      const client = await conectar(fetchFalso)
+
+      const resultado = await client.callTool({ name: 'obter_curriculo_ativo', arguments: {} })
+
+      expect(resultado.isError).toBe(true)
+      expect(textoDe(resultado)).toBe('Você ainda não tem um currículo ativo')
     })
   })
 
