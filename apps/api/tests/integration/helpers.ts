@@ -3,6 +3,7 @@ import { createApp } from '../../src/app.js'
 import { prisma } from '../../src/lib/prisma.js'
 import { createPrismaUsuarioRepository } from '../../src/modules/auth/usuario.repository.js'
 import { createPrismaCandidaturaRepository } from '../../src/modules/candidaturas/candidatura.repository.js'
+import { createPrismaCurriculoRepository } from '../../src/modules/curriculos/curriculo.repository.js'
 import { createPrismaEmpresaRepository } from '../../src/modules/empresas/empresa.repository.js'
 import { createPrismaVagaRepository } from '../../src/modules/vagas/vaga.repository.js'
 import { assertTestDatabase } from './test-database.js'
@@ -16,6 +17,7 @@ export function createIntegrationApp() {
     empresas: createPrismaEmpresaRepository(prisma),
     vagas: createPrismaVagaRepository(prisma),
     candidaturas: createPrismaCandidaturaRepository(prisma),
+    curriculos: createPrismaCurriculoRepository(prisma),
   })
 }
 
