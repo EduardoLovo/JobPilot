@@ -8,6 +8,9 @@ on:
 jobs:
   qualidade:
     runs-on: ubuntu-latest
+    env:
+      # Lida pelo prisma.config.ts; o banco de teste entra junto com a JP-07
+      DATABASE_URL: postgresql://jobpilot:jobpilot@localhost:5432/jobpilot
     steps:
       - uses: actions/checkout@v4
 
