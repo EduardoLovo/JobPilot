@@ -141,7 +141,9 @@ model AnaliseIa {
   recomendacoes    String
   geradaEm         DateTime    @default(now()) @map("gerada_em")
   candidatura      Candidatura @relation(fields: [candidaturaId], references: [id], onDelete: Cascade)
-  curriculo        Curriculo   @relation(fields: [curriculoId], references: [id])
+  // Cascade: apagar um currículo apaga as análises feitas com ele. Com Restrict, apagar um usuário
+  // que tem análises falhava, porque o banco barrava o currículo antes de a cascata chegar às análises
+  curriculo        Curriculo   @relation(fields: [curriculoId], references: [id], onDelete: Cascade)
 
   @@index([curriculoId])
   @@map("analises_ia")
